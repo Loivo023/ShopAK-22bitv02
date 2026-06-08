@@ -5,5 +5,5 @@ app = FastAPI()
 @app.get("/")
 def root():
     return {
-        "message": "Welcome to ShopHub API"
+        "message": "Welcome to ShopAK API"
     }
