@@ -1,18 +1,21 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import Header from './Components/Header';
+import Banner from './Components/Banner';
+import FeatureSection from './Components/FeatureSection';
+import Footer from './Components/Footer';
 
-function App() {
+const App = () => {
   return (
     <>
-      <h1>ShopAK</h1>
-      <h2>Student name: Lê Nguyễn Hoàng Long <br/>
-          Student name: Võ Thành Lợi</h2> 
-      <h3> Date: 2026-06-08 </h3>
+      <Header title="ShopAK" />
+      <Banner subtitle="Welcome to our store" buttonText="Shop Now" />
+      <FeatureSection />
+      <Footer
+        studentName="Le Nguyen Hoang Long & Vo Thanh Loi"
+        courseName="Full-Stack Web Development"
+      />
     </>
-  )
-}
+  );
+};
+ 
+export default App;
 
-export default App
