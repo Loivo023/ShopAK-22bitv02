@@ -1,0 +1,82 @@
+[
+  {
+    "id": 1,
+    "name": "Gaming Laptop",
+    "price": 1500,
+    "category": "Electronics",
+    "imageUrl": "https://via.placeholder.com/150",
+    "description": "High performance laptop for gaming and work."
+  },
+  {
+    "id": 2,
+    "name": "Wireless Mouse",
+    "price": 25,
+    "category": "Accessories",
+    "imageUrl": "https://via.placeholder.com/150",
+    "description": "Comfortable mouse with long battery life."
+  },
+  {
+    "id": 3,
+    "name": "Mechanical Keyboard",
+    "price": 85,
+    "category": "Accessories",
+    "imageUrl": "https://via.placeholder.com/150",
+    "description": "Tactile mechanical switches with RGB backlight."
+  },
+  {
+    "id": 4,
+    "name": "4K Monitor",
+    "price": 450,
+    "category": "Electronics",
+    "imageUrl": "https://via.placeholder.com/150",
+    "description": "27-inch 4K UHD display with 144Hz refresh rate."
+  },
+  {
+    "id": 5,
+    "name": "Noise Cancelling Headphones",
+    "price": 199,
+    "category": "Audio",
+    "imageUrl": "https://via.placeholder.com/150",
+    "description": "Over-ear headphones with active noise cancellation."
+  },
+  {
+    "id": 6,
+    "name": "USB-C Hub",
+    "price": 40,
+    "category": "Accessories",
+    "imageUrl": "https://via.placeholder.com/150",
+    "description": "7-in-1 hub with HDMI, USB 3.0, and SD card reader."
+  },
+  {
+    "id": 7,
+    "name": "Webcam HD 1080p",
+    "price": 65,
+    "category": "Electronics",
+    "imageUrl": "https://via.placeholder.com/150",
+    "description": "Full HD webcam with built-in microphone and auto-focus."
+  },
+  {
+    "id": 8,
+    "name": "Gaming Chair",
+    "price": 320,
+    "category": "Furniture",
+    "imageUrl": "https://via.placeholder.com/150",
+    "description": "Ergonomic gaming chair with lumbar and neck support."
+  },
+  {
+    "id": 9,
+    "name": "External SSD 1TB",
+    "price": 110,
+    "category": "Storage",
+    "imageUrl": "https://via.placeholder.com/150",
+    "description": "Portable SSD with USB 3.2 and up to 1050MB/s read speed."
+  },
+  {
+    "id": 10,
+    "name": "Smartphone Stand",
+    "price": 15,
+    "category": "Accessories",
+    "imageUrl": "https://via.placeholder.com/150",
+    "description": "Adjustable aluminum desk stand for phones and tablets."
+  }
+]
