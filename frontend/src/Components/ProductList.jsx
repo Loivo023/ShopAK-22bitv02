@@ -109,7 +109,7 @@ const filtered = products
       color: '#ffffff'
     }}
   >
-    <option value="">Sort by</option>
+    <option value="">All</option>
     <option value="low">Price: Low → High</option>
     <option value="high">Price: High → Low</option>
     <option value="name-a-z">Name: A → Z</option>

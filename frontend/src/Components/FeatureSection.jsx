@@ -27,6 +27,5 @@ const FeatureSection = () => {
     </section>
   );
 };
- 
 export default FeatureSection;
 
