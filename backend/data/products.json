@@ -2,11 +2,11 @@
   {
     "id": 1,
     "name": "Gaming Laptop",
-    "price": 1500,
+    "price": 1500.0,
     "category": "Electronics",
     "description": "High performance laptop for gaming and work.",
-    "imageUrl": "https://images.unsplash.com/photo-1603302576837-37561b2e2302?w=300",
-    "imagePath": "",
+    "imageUrl": "",
+    "imagePath": "data_images/1_2aa4ca96.jpg",
     "costPrice": 1000
   },
   {
@@ -55,7 +55,7 @@
     "price": 40,
     "category": "Accessories",
     "description": "7-in-1 hub with HDMI, USB 3.0, and SD card reader.",
-    "imageUrl": "https://images.unsplash.com/photo-1618410320928-25228d811631?w=300",
+    "imageUrl": "https://images.unsplash.com/photo-1760462788271-2909bf082437?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTF8fHVzYiUyMGMlMjBodWJ8ZW58MHx8MHx8fDA%3D",
     "imagePath": "",
     "costPrice": 20
   },
@@ -65,7 +65,7 @@
     "price": 65,
     "category": "Electronics",
     "description": "Full HD webcam with built-in microphone and auto-focus.",
-    "imageUrl": "https://images.unsplash.com/photo-1587826080692-f439cd0b70da?w=300",
+    "imageUrl": "https://images.unsplash.com/photo-1636569826709-8e07f6104992?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTB8fHdlYmNhbXxlbnwwfHwwfHx8MA%3D%3D",
     "imagePath": "",
     "costPrice": 35
   },
@@ -85,7 +85,7 @@
     "price": 110,
     "category": "Storage",
     "description": "Portable SSD with USB 3.2 and up to 1050MB/s read speed.",
-    "imageUrl": "https://images.unsplash.com/photo-1597848212624-a19eb35e2651?w=300",
+    "imageUrl": "https://images.unsplash.com/photo-1756836857570-127b0408b676?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTh8fHNzZCUyMGRyaXZlfGVufDB8fDB8fHww",
     "imagePath": "",
     "costPrice": 60
   },
@@ -95,8 +95,38 @@
     "price": 15,
     "category": "Accessories",
     "description": "Adjustable aluminum desk stand for phones and tablets.",
-    "imageUrl": "https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=300",
+    "imageUrl": "https://images.unsplash.com/photo-1708233002626-ff54f9e41506?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     "imagePath": "",
     "costPrice": 5
+  },
+  {
+    "id": 11,
+    "name": "string",
+    "price": 10000.0,
+    "category": "string",
+    "description": "string",
+    "imagePath": "data_images/11_285a94e5.png",
+    "imageUrl": "",
+    "costPrice": null
+  },
+  {
+    "id": 12,
+    "name": "Product 1",
+    "price": 1500.0,
+    "category": "Electronics",
+    "description": "High performance laptop for gaming and work.",
+    "imagePath": "data_images/12_18c1e767.jpg",
+    "imageUrl": "",
+    "costPrice": null
+  },
+  {
+    "id": 13,
+    "name": "Product 1",
+    "price": 1500.0,
+    "category": "Electronics",
+    "description": "High performance laptop for gaming and work.",
+    "imagePath": "data_images/13_25d772e0.jpg",
+    "imageUrl": "",
+    "costPrice": null
   }
 ]

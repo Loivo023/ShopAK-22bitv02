@@ -10,9 +10,12 @@ const ProductList = () => {
   const [sortOption, setSortOption] = useState('');
 
   useEffect(() => {
-    fetch('https://fakestoreapi.com/products')
-      .then((res) => { if (!res.ok) throw new Error('Failed to fetch'); return res.json(); })
-      .then((data) => setProducts(data))
+    fetch('http://localhost:8000/products?page=1&size=20')
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to fetch');
+        return res.json();
+      })
+      .then((data) => setProducts(data.items))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);
@@ -26,12 +29,19 @@ const ProductList = () => {
   if (loading) return <LoadingSpinner />;
   if (error)   return <ErrorBox message={error} />;
 
-  const categories = ['All', ...new Set(products.map((p) => p.category))];
+  const categories = ['All', ...new Set(
+    products.map((p) => p.category).filter(Boolean)
+  )];
 
   const filtered = products
     .filter((p) => {
-      const matchCat = selectedCategory === 'All' || p.category === selectedCategory;
-      const matchSearch = p.title.toLowerCase().includes(search.toLowerCase());
+      const matchCat = selectedCategory === 'All' ||
+        p.category?.toLowerCase() === selectedCategory.toLowerCase();
+
+      const matchSearch =
+        p.name?.toLowerCase().includes(search.toLowerCase()) ||
+        p.description?.toLowerCase().includes(search.toLowerCase());
+
       return matchCat && matchSearch;
     })
     .sort((a, b) => {
@@ -106,10 +116,10 @@ const ProductList = () => {
             <ProductCard
               key={p.id}
               id={p.id}
-              name={p.title}
+              name={p.name}      
               price={p.price}
               category={p.category}
-              imageUrl={p.image}
+              imageUrl={p.imageUrl}
               description={p.description}
             />
           ))}
