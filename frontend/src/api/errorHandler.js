@@ -10,6 +10,4 @@ export function handleApiError(error, fallbackMessage = "API request failed") {
   } else {
     console.error("API Error:", error.message);
   }
-
-  // You can extend this later to return a message or handle specific codes
 }

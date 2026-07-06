@@ -1,4 +1,3 @@
-// src/api/productsApi.js
 import axiosClient from "./axiosClient";
 import { handleApiError } from "./errorHandler";
 
@@ -19,6 +18,18 @@ export const productsApi = {
       return response.data;
     } catch (error) {
       handleApiError(error, "Failed to fetch product details");
+      throw error;
+    }
+  },
+
+  async searchProduct(keyword) {
+    try {
+      const response = await axiosClient.get("/products", {
+        params: { search: keyword },
+      });
+      return response.data;
+    } catch (error) {
+      handleApiError(error, "Failed to search products");
       throw error;
     }
   },
