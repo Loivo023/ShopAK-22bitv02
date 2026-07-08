@@ -15,7 +15,7 @@ const ProductList = () => {
       try {
         setLoading(true);
         const data = await productsApi.getAll({ page: 1, size: 20 });
-        setProducts(data.items);
+        setProducts(data);
       } catch (err) {
         setError("Failed to load products.");
       } finally {
