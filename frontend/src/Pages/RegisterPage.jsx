@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authApi } from '../api/authApi';
-import { setToken, setUser } from '../auth/token';
 
-const LoginPage = () => {
-  const [form, setForm] = useState({ email: '', password: '' });
+const RegisterPage = () => {
+  const [form, setForm] = useState({ email: '', fullName: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -17,17 +17,19 @@ const LoginPage = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setSuccessMessage('');
 
     try {
-      const result = await authApi.login({
+      await authApi.register({
         email: form.email,
+        full_name: form.fullName,
         password: form.password,
       });
-      setToken(result.access_token);
-      setUser(result.user);
-      navigate('/products');
+      setSuccessMessage('Registration successful! Redirecting to login...');
+      setForm({ email: '', fullName: '', password: '' });
+      setTimeout(() => navigate('/login'), 1500);
     } catch (err) {
-      const msg = err.response?.data?.detail || 'Login failed. Please check your credentials.';
+      const msg = err.response?.data?.detail || 'Registration failed. Please check your input.';
       setError(msg);
     } finally {
       setLoading(false);
@@ -36,9 +38,9 @@ const LoginPage = () => {
 
   return (
     <section style={{ padding: '40px 16px', maxWidth: '420px', margin: '0 auto' }}>
-      <h2 style={{ color: '#111', marginBottom: '4px' }}>Welcome Back</h2>
+      <h2 style={{ color: '#111', marginBottom: '4px' }}>Create Account</h2>
       <p style={{ color: '#888', fontSize: '0.9rem', marginBottom: '24px' }}>
-        Log in to your ShopAK account.
+        Join ShopAK to start shopping.
       </p>
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -61,6 +63,23 @@ const LoginPage = () => {
 
         <div>
           <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.9rem', color: '#333' }}>
+            Full Name
+          </label>
+          <input
+            type="text"
+            name="fullName"
+            value={form.fullName}
+            onChange={handleChange}
+            required
+            style={{
+              width: '100%', padding: '10px 12px', borderRadius: '6px',
+              border: '1px solid #ddd', fontSize: '0.95rem', boxSizing: 'border-box',
+            }}
+          />
+        </div>
+
+        <div>
+          <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.9rem', color: '#333' }}>
             Password
           </label>
           <input
@@ -69,6 +88,7 @@ const LoginPage = () => {
             value={form.password}
             onChange={handleChange}
             required
+            minLength={6}
             style={{
               width: '100%', padding: '10px 12px', borderRadius: '6px',
               border: '1px solid #ddd', fontSize: '0.95rem', boxSizing: 'border-box',
@@ -86,22 +106,25 @@ const LoginPage = () => {
             opacity: loading ? 0.7 : 1,
           }}
         >
-          {loading ? 'Logging in...' : 'Login'}
+          {loading ? 'Registering...' : 'Register'}
         </button>
       </form>
 
       {error && (
         <p style={{ color: '#c0392b', marginTop: '16px', fontSize: '0.9rem' }}>{error}</p>
       )}
+      {successMessage && (
+        <p style={{ color: '#2e7d32', marginTop: '16px', fontSize: '0.9rem' }}>{successMessage}</p>
+      )}
 
       <p style={{ marginTop: '20px', fontSize: '0.9rem', color: '#555', textAlign: 'center' }}>
-        Don't have an account?{' '}
-        <Link to="/register" style={{ color: '#1976d2', textDecoration: 'none' }}>
-          Register
+        Already have an account?{' '}
+        <Link to="/login" style={{ color: '#1976d2', textDecoration: 'none' }}>
+          Log in
         </Link>
       </p>
     </section>
   );
 };
 
-export default LoginPage;
+export default RegisterPage;

@@ -7,8 +7,8 @@ import ProductPage from "./pages/ProductPage";
 import ProductDetailPage from "./pages/ProductDetailPage";
 import CartPage from "./pages/CartPage";
 import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
 import NotFound from "./pages/NotFound";
-import { ProductDetail } from "./Components/ProductDetail";
 
 const App = () => {
   const [cartItems, setCartItems] = useState([]);
@@ -72,6 +72,7 @@ const App = () => {
             }
           />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

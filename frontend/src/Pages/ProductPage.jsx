@@ -1,11 +1,9 @@
-const data = await productsApi.getAll({ page: 1, size: 20 });
-const mapped = data.map((p) => ({
+import { useEffect, useState } from "react";
+import { productsApi } from "../api/productsApi";
+import ProductList from "../Components/ProductList";
 
-  id: p.id,
-  name: p.name,
-  price: p.price,
-  category: p.category,
-  description: p.description,
-  imageUrl: p.imageUrl,
-}));
-setProducts(mapped);
+const ProductPage = () => {
+  return <ProductList />;
+};
+
+export default ProductPage;
