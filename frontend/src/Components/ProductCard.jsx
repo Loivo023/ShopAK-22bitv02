@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
-const ProductCard = ({ id, name, price, category, imageUrl, description }) => {
+const ProductCard = ({ id, name, price, category, imageUrl, description, isAdmin, onDelete }) => {
   const [hovered, setHovered] = useState(false);
 
   const truncated =
@@ -108,7 +108,7 @@ const ProductCard = ({ id, name, price, category, imageUrl, description }) => {
       <Link
         to={`/products/${id}`}
         style={{
-          marginTop: "auto",
+          marginTop: isAdmin ? 0 : "auto",
           padding: "8px 12px",
           backgroundColor: "#1976d2",
           color: "#fff",
@@ -121,6 +121,25 @@ const ProductCard = ({ id, name, price, category, imageUrl, description }) => {
       >
         View Details
       </Link>
+
+      {isAdmin && (
+        <button
+          onClick={() => onDelete(id)}
+          style={{
+            marginTop: "auto",
+            padding: "8px 12px",
+            backgroundColor: "#e53935",
+            color: "#fff",
+            border: "none",
+            borderRadius: "6px",
+            cursor: "pointer",
+            fontSize: "0.88rem",
+            fontWeight: "500",
+          }}
+        >
+          Delete
+        </button>
+      )}
     </div>
   );
 };

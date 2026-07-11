@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import ProductCard from "./ProductCard";
 import { productsApi } from "../api/productsApi";
+import { useAuth } from "../auth/useAuth";
 
 const ProductList = () => {
   const [products, setProducts] = useState([]);
@@ -9,6 +11,9 @@ const ProductList = () => {
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [sortOption, setSortOption] = useState("");
+  const { role } = useAuth();
+  const isAdmin = role === "ADMIN";
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -22,9 +27,18 @@ const ProductList = () => {
         setLoading(false);
       }
     };
-
     fetchProducts();
   }, []);
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this product?")) return;
+    try {
+      await productsApi.delete(id);
+      setProducts((prev) => prev.filter((p) => p.id !== id));
+    } catch (err) {
+      alert("Failed to delete product. You may not have permission.");
+    }
+  };
 
   const clearFilters = () => {
     setSearch("");
@@ -57,75 +71,40 @@ const ProductList = () => {
     });
 
   return (
-    <section
-      style={{
-        padding: "24px 16px",
-        maxWidth: "1200px",
-        margin: "0 auto",
-        width: "100%",
-        boxSizing: "border-box",
-      }}
-    >
-      <h2 style={{ color: "#111", marginBottom: "4px" }}>Product Catalog</h2>
+    <section style={{ padding: "24px 16px", maxWidth: "1200px", margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+        <h2 style={{ color: "#111", margin: 0 }}>Product Catalog</h2>
+        {isAdmin && (
+          <button
+            onClick={() => navigate("/admin/products/new")}
+            style={{
+              padding: "8px 16px", backgroundColor: "#1976d2", color: "#fff",
+              border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "0.9rem", fontWeight: "500",
+            }}
+          >
+            + Create Product
+          </button>
+        )}
+      </div>
       <p style={{ color: "#888", marginBottom: "20px", fontSize: "0.9rem" }}>
         {products.length} products available
       </p>
 
-      <div
-        style={{
-          display: "flex",
-          gap: "10px",
-          flexWrap: "wrap",
-          marginBottom: "16px",
-          alignItems: "center",
-        }}
-      >
+      <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "16px", alignItems: "center" }}>
         <input
-          type="text"
-          placeholder="Search by name..."
-          value={search}
+          type="text" placeholder="Search by name..." value={search}
           onChange={(e) => setSearch(e.target.value)}
-          style={{
-            padding: "8px 12px",
-            borderRadius: "6px",
-            border: "1px solid #ddd",
-            fontSize: "0.9rem",
-            flex: "1",
-            minWidth: "160px",
-            color: "#333",
-          }}
+          style={{ padding: "8px 12px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "0.9rem", flex: "1", minWidth: "160px", color: "#333" }}
         />
         <select
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-          style={{
-            padding: "8px 12px",
-            borderRadius: "6px",
-            border: "1px solid #ddd",
-            fontSize: "0.9rem",
-            color: "#333",
-            backgroundColor: "#fff",
-            cursor: "pointer",
-          }}
+          value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)}
+          style={{ padding: "8px 12px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "0.9rem", color: "#333", backgroundColor: "#fff", cursor: "pointer" }}
         >
-          {categories.map((cat) => (
-            <option key={cat} value={cat}>
-              {cat}
-            </option>
-          ))}
+          {categories.map((cat) => (<option key={cat} value={cat}>{cat}</option>))}
         </select>
         <select
-          value={sortOption}
-          onChange={(e) => setSortOption(e.target.value)}
-          style={{
-            padding: "8px 12px",
-            borderRadius: "6px",
-            border: "1px solid #ddd",
-            fontSize: "0.9rem",
-            color: "#333",
-            backgroundColor: "#fff",
-            cursor: "pointer",
-          }}
+          value={sortOption} onChange={(e) => setSortOption(e.target.value)}
+          style={{ padding: "8px 12px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "0.9rem", color: "#333", backgroundColor: "#fff", cursor: "pointer" }}
         >
           <option value="">Sort: Default</option>
           <option value="low">Price: Low → High</option>
@@ -133,15 +112,7 @@ const ProductList = () => {
         </select>
         <button
           onClick={clearFilters}
-          style={{
-            padding: "8px 16px",
-            borderRadius: "6px",
-            border: "1px solid #e53935",
-            backgroundColor: "#fff",
-            color: "#e53935",
-            cursor: "pointer",
-            fontSize: "0.88rem",
-          }}
+          style={{ padding: "8px 16px", borderRadius: "6px", border: "1px solid #e53935", backgroundColor: "#fff", color: "#e53935", cursor: "pointer", fontSize: "0.88rem" }}
         >
           Clear Filters
         </button>
@@ -162,6 +133,8 @@ const ProductList = () => {
               category={p.category}
               imageUrl={p.imageUrl}
               description={p.description}
+              isAdmin={isAdmin}
+              onDelete={handleDelete}
             />
           ))}
         </div>
@@ -176,35 +149,14 @@ const ProductList = () => {
 
 const LoadingSpinner = () => (
   <div style={{ textAlign: "center", padding: "60px", color: "#888" }}>
-    <div
-      style={{
-        width: "36px",
-        height: "36px",
-        border: "4px solid #eee",
-        borderTop: "4px solid #1976d2",
-        borderRadius: "50%",
-        animation: "spin 0.8s linear infinite",
-        margin: "0 auto 12px",
-      }}
-    />
+    <div style={{ width: "36px", height: "36px", border: "4px solid #eee", borderTop: "4px solid #1976d2", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 12px" }} />
     <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     <p>Loading products...</p>
   </div>
 );
 
 const ErrorBox = ({ message }) => (
-  <div
-    style={{
-      margin: "40px auto",
-      maxWidth: "400px",
-      padding: "20px",
-      backgroundColor: "#fff3f3",
-      border: "1px solid #f5c2c2",
-      borderRadius: "8px",
-      textAlign: "center",
-      color: "#c0392b",
-    }}
-  >
+  <div style={{ margin: "40px auto", maxWidth: "400px", padding: "20px", backgroundColor: "#fff3f3", border: "1px solid #f5c2c2", borderRadius: "8px", textAlign: "center", color: "#c0392b" }}>
     <p style={{ fontSize: "1.4rem" }}>⚠️</p>
     <p style={{ fontWeight: "bold" }}>Something went wrong</p>
     <p style={{ fontSize: "0.9rem" }}>{message}</p>

@@ -9,7 +9,6 @@ from auth.security import hash_password, verify_password, create_access_token, A
 
 router = APIRouter(tags=["auth"])
 
-
 @router.post("/register", response_model=AuthUser, status_code=status.HTTP_201_CREATED)
 def register_user(payload: RegisterRequest, db: Session = Depends(get_db)):
     existing = db.query(UserDB).filter(UserDB.email == payload.email).first()

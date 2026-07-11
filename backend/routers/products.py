@@ -5,6 +5,7 @@ from typing import List, Optional
 from database import get_db
 from models.product import ProductDB
 from schemas.products import ProductCreate, ProductUpdate, ProductRead
+from auth.deps import require_admin
 
 router = APIRouter(prefix="/products", tags=["products"])
 
@@ -17,7 +18,6 @@ def list_products(
     db: Session = Depends(get_db),
 ):
     query = db.query(ProductDB)
-
     if category:
         query = query.filter(ProductDB.category.ilike(category))
 
@@ -46,7 +46,12 @@ def get_product(product_id: int, db: Session = Depends(get_db)):
     )
 
 
-@router.post("", response_model=ProductRead, status_code=201)
+@router.post(
+    "",
+    response_model=ProductRead,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_admin)],
+)
 def create_product(payload: ProductCreate, db: Session = Depends(get_db)):
     new_product = ProductDB(
         name=payload.name, price=payload.price,
@@ -84,7 +89,11 @@ def update_product(product_id: int, payload: ProductUpdate, db: Session = Depend
     )
 
 
-@router.delete("/{product_id}", status_code=204)
+@router.delete(
+    "/{product_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(require_admin)],
+)
 def delete_product(product_id: int, db: Session = Depends(get_db)):
     product = db.query(ProductDB).filter(ProductDB.id == product_id).first()
     if not product:
