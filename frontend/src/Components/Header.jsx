@@ -1,6 +1,9 @@
 import { NavLink } from 'react-router-dom';
+import { useCart } from '../context/CartContext';
 
-const Header = ({ title, cartCount }) => {
+const Header = ({ title }) => {
+  const { totalQuantity } = useCart();
+
   const navItems = [
     { label: 'Home',     to: '/' },
     { label: 'Products', to: '/products' },
@@ -42,7 +45,7 @@ const Header = ({ title, cartCount }) => {
           >
             {item.label}
             {/* Badge on Cart */}
-            {item.label === 'Cart' && cartCount > 0 && (
+            {item.label === 'Cart' && totalQuantity > 0 && (
               <span style={{
                 position: 'absolute',
                 top: '-6px',
@@ -56,7 +59,7 @@ const Header = ({ title, cartCount }) => {
                 minWidth: '16px',
                 textAlign: 'center',
               }}>
-                {cartCount}
+                {totalQuantity}
               </span>
             )}
           </NavLink>

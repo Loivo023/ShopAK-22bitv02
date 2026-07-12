@@ -1,11 +1,20 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useCart } from "../context/CartContext";
 
 const ProductCard = ({ id, name, price, category, imageUrl, description, isAdmin, onDelete }) => {
   const [hovered, setHovered] = useState(false);
+  const [added, setAdded] = useState(false);
+  const { addToCart } = useCart();
 
   const truncated =
     description?.length > 65 ? description.slice(0, 65) + "..." : description;
+
+  const handleAddToCart = () => {
+    addToCart({ id, name, price, imageUrl }, 1);
+    setAdded(true);
+    setTimeout(() => setAdded(false), 1200);
+  };
 
   return (
     <div
@@ -53,21 +62,10 @@ const ProductCard = ({ id, name, price, category, imageUrl, description, isAdmin
         onError={(e) => {
           e.currentTarget.src = "https://placehold.co/300x200?text=No+Image";
         }}
-        style={{
-          width: "100%",
-          height: "200px",
-          objectFit: "cover",
-        }}
+        style={{ width: "100%", height: "200px", objectFit: "cover" }}
       />
 
-      <h3
-        style={{
-          margin: 0,
-          fontSize: "0.9rem",
-          color: "#111",
-          lineHeight: "1.3",
-        }}
-      >
+      <h3 style={{ margin: 0, fontSize: "0.9rem", color: "#111", lineHeight: "1.3" }}>
         {name}
       </h3>
 
@@ -84,56 +82,60 @@ const ProductCard = ({ id, name, price, category, imageUrl, description, isAdmin
         {category}
       </span>
 
-      <p
-        style={{
-          margin: 0,
-          fontWeight: "bold",
-          color: "#1976d2",
-          fontSize: "1rem",
-        }}
-      >
+      <p style={{ margin: 0, fontWeight: "bold", color: "#1976d2", fontSize: "1rem" }}>
         ${price}
       </p>
-      <p
-        style={{
-          margin: 0,
-          fontSize: "0.82rem",
-          color: "#666",
-          lineHeight: "1.4",
-        }}
-      >
+      <p style={{ margin: 0, fontSize: "0.82rem", color: "#666", lineHeight: "1.4" }}>
         {truncated}
       </p>
 
-      <Link
-        to={`/products/${id}`}
-        style={{
-          marginTop: isAdmin ? 0 : "auto",
-          padding: "8px 12px",
-          backgroundColor: "#1976d2",
-          color: "#fff",
-          borderRadius: "6px",
-          textAlign: "center",
-          textDecoration: "none",
-          fontSize: "0.88rem",
-          fontWeight: "500",
-        }}
-      >
-        View Details
-      </Link>
+      <div style={{ display: "flex", gap: "6px" }}>
+        <Link
+          to={`/products/${id}`}
+          style={{
+            flex: 1,
+            padding: "8px 10px",
+            backgroundColor: "#1976d2",
+            color: "#fff",
+            borderRadius: "6px",
+            textAlign: "center",
+            textDecoration: "none",
+            fontSize: "0.82rem",
+            fontWeight: "500",
+          }}
+        >
+          View Details
+        </Link>
+
+        <button
+          onClick={handleAddToCart}
+          style={{
+            flex: 1,
+            padding: "8px 10px",
+            backgroundColor: added ? "#4caf50" : "#fff",
+            color: added ? "#fff" : "#1976d2",
+            border: "1px solid #1976d2",
+            borderRadius: "6px",
+            cursor: "pointer",
+            fontSize: "0.82rem",
+            fontWeight: "500",
+          }}
+        >
+          {added ? "✓ Added" : "Add to Cart"}
+        </button>
+      </div>
 
       {isAdmin && (
         <button
           onClick={() => onDelete(id)}
           style={{
-            marginTop: "auto",
             padding: "8px 12px",
             backgroundColor: "#e53935",
             color: "#fff",
             border: "none",
             borderRadius: "6px",
             cursor: "pointer",
-            fontSize: "0.88rem",
+            fontSize: "0.82rem",
             fontWeight: "500",
           }}
         >
