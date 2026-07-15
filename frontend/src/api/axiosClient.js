@@ -1,8 +1,8 @@
-import axios from 'axios';
-import { getToken } from '../auth/token';
+import axios from "axios";
+import { getToken, clearToken } from "../auth/token";
 
 const axiosClient = axios.create({
-  baseURL: 'http://localhost:8000',
+  baseURL: "http://localhost:8000",
   timeout: 10000,
 });
 
@@ -17,7 +17,15 @@ axiosClient.interceptors.request.use((config) => {
 axiosClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    console.error('API Error:', error.response?.status, error.message);
+    console.error("API Error:", error.response?.status, error.message);
+
+    if (error.response?.status === 401) {
+      clearToken();
+      if (window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
+    }
+
     return Promise.reject(error);
   },
 );

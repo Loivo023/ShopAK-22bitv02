@@ -1,5 +1,5 @@
-const TOKEN_KEY = 'shopak_token';
-const USER_KEY  = 'shopak_user';
+const TOKEN_KEY = "shopak_token";
+const USER_KEY = "shopak_user";
 
 export function setToken(token) {
   localStorage.setItem(TOKEN_KEY, token);

@@ -1,5 +1,7 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
+import { ordersApi } from "../api/ordersApi";
 
 const CartPage = () => {
   const {
@@ -10,6 +12,30 @@ const CartPage = () => {
     totalPrice,
     clearCart,
   } = useCart();
+  const [placingOrder, setPlacingOrder] = useState(false);
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
+
+  const handleCheckout = async () => {
+    if (items.length === 0) return;
+    setPlacingOrder(true);
+    setError("");
+
+    try {
+      const order = await ordersApi.checkout(items);
+      clearCart();
+      navigate(`/orders/${order.id}`);
+    } catch (err) {
+      const detail = err.response?.data?.detail;
+      setError(
+        typeof detail === "string"
+          ? detail
+          : "Failed to place order. Please try again.",
+      );
+    } finally {
+      setPlacingOrder(false);
+    }
+  };
 
   if (items.length === 0) {
     return (
@@ -95,14 +121,14 @@ const CartPage = () => {
                   border: "1px solid #ddd",
                   borderRadius: "4px",
                   backgroundColor: "#fff",
-                  color: "#333",
-                  fontSize: "1rem",
+                  color: "#000",
+                  fontSize: "16px",
                   fontWeight: "bold",
                   cursor: "pointer",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  lineHeight: 1,
+                  padding: 0,
                 }}
               >
                 -
@@ -122,14 +148,12 @@ const CartPage = () => {
                   backgroundColor: "#fff",
                   color: "#000",
                   fontSize: "16px",
-                  fontFamily: "Arial, sans-serif",
                   fontWeight: "bold",
                   cursor: "pointer",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   padding: 0,
-                  lineHeight: "normal",
                 }}
               >
                 +
@@ -165,6 +189,22 @@ const CartPage = () => {
         ))}
       </div>
 
+      {error && (
+        <div
+          style={{
+            marginTop: "16px",
+            padding: "10px 14px",
+            backgroundColor: "#fff3f3",
+            border: "1px solid #f5c2c2",
+            borderRadius: "6px",
+            color: "#c0392b",
+            fontSize: "0.9rem",
+          }}
+        >
+          {error}
+        </div>
+      )}
+
       <div style={{ marginTop: "24px", display: "flex", gap: "12px" }}>
         <button
           onClick={clearCart}
@@ -180,6 +220,8 @@ const CartPage = () => {
           Clear Cart
         </button>
         <button
+          onClick={handleCheckout}
+          disabled={placingOrder}
           style={{
             padding: "10px 20px",
             backgroundColor: "#1976d2",
@@ -187,9 +229,10 @@ const CartPage = () => {
             border: "none",
             borderRadius: "6px",
             cursor: "pointer",
+            opacity: placingOrder ? 0.7 : 1,
           }}
         >
-          Checkout (Mock)
+          {placingOrder ? "Placing Order..." : "Checkout"}
         </button>
       </div>
     </section>

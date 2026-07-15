@@ -8,19 +8,21 @@ import mimetypes
 from database import engine, Base
 from models.product import ProductDB
 from models.user import UserDB
+from models.order import OrderDB, OrderItemDB
 from routers.products import router as products_router
 from routers.users import router as users_router
 from routers.auth import router as auth_router
+from routers.orders import router as orders_router
 
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="ShopAK API", version="2.1.0")
+app = FastAPI(title="ShopAK API", version="2.2.0")
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
     allow_headers=["*"],
 )
 
@@ -30,6 +32,7 @@ app.mount("/images", StaticFiles(directory="data_images"), name="images")
 app.include_router(products_router)
 app.include_router(users_router)
 app.include_router(auth_router)
+app.include_router(orders_router)
 
 @app.get("/")
 def root():
