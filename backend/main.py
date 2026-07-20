@@ -9,14 +9,16 @@ from database import engine, Base
 from models.product import ProductDB
 from models.user import UserDB
 from models.order import OrderDB, OrderItemDB
+from models.payment import PaymentDB
 from routers.products import router as products_router
 from routers.users import router as users_router
 from routers.auth import router as auth_router
 from routers.orders import router as orders_router
+from routers.payments import router as payments_router
 
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="ShopAK API", version="2.2.0")
+app = FastAPI(title="ShopAK API", version="2.3.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -33,6 +35,7 @@ app.include_router(products_router)
 app.include_router(users_router)
 app.include_router(auth_router)
 app.include_router(orders_router)
+app.include_router(payments_router)
 
 @app.get("/")
 def root():

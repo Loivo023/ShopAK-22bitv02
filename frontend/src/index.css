@@ -60,3 +60,11 @@ h2 {
 p {
   margin: 0;
 }
+
+html {
+  overflow-y: scroll;
+}
+
+body {
+  overflow-x: hidden;
+}

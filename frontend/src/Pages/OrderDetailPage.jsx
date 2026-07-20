@@ -159,6 +159,23 @@ const OrderDetailPage = () => {
           Total: ${order.total_amount.toFixed(2)}
         </p>
       </div>
+      {order.status !== "PAID" && !isAdmin && (
+        <Link
+          to={`/orders/${order.id}/payment`}
+          style={{
+            display: "inline-block",
+            marginTop: "12px",
+            padding: "10px 24px",
+            backgroundColor: "#1976d2",
+            color: "#fff",
+            borderRadius: "6px",
+            textDecoration: "none",
+            fontWeight: "500",
+          }}
+        >
+          Pay Now
+        </Link>
+      )}
 
       <h3 style={{ color: "#111", fontSize: "1.05rem", marginBottom: "12px" }}>
         Items
