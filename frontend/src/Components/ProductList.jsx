@@ -94,7 +94,7 @@ const ProductList = () => {
         <input
           type="text" placeholder="Search by name..." value={search}
           onChange={(e) => setSearch(e.target.value)}
-          style={{ padding: "8px 12px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "0.9rem", flex: "1", minWidth: "160px", color: "#333" }}
+          style={{ padding: "8px 12px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "0.9rem", flex: "1", minWidth: "160px", color: "#ffffff" }}
         />
         <select
           value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)}

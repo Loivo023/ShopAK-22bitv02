@@ -21,4 +21,14 @@ export const usersApi = {
       throw error;
     }
   },
+
+  async updateRole(id, role) {
+    try {
+      const response = await axiosClient.patch(`/users/${id}/role`, { role });
+      return response.data;
+    } catch (error) {
+      handleApiError(error, "Failed to update user role");
+      throw error;
+    }
+  },
 };

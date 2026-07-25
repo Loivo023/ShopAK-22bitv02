@@ -12,6 +12,10 @@ import OrderHistoryPage from "./pages/OrderHistoryPage";
 import OrderDetailPage from "./pages/OrderDetailPage";
 import OrderPaymentPage from "./pages/OrderPaymentPage";
 import AdminOrdersPage from "./pages/AdminOrdersPage";
+import AdminDashboardPage from "./pages/AdminDashboardPage";
+import AdminProductsPage from "./pages/AdminProductsPage";
+import ProductEditPage from "./pages/ProductEditPage";
+import AdminUsersPage from "./pages/AdminUsersPage";
 import StripeSuccess from "./pages/payment/StripeSuccess";
 import StripeCancel from "./pages/payment/StripeCancel";
 import PaypalSuccess from "./pages/payment/PaypalSuccess";
@@ -21,57 +25,180 @@ import VnpayCancel from "./pages/payment/VnpayCancel";
 import NotFound from "./pages/NotFound";
 import AdminRoute from "./routes/AdminRoute";
 import PrivateRoute from "./routes/PrivateRoute";
+import AdminLayout from "./layouts/AdminLayout";
+
+const StoreLayout = ({ children }) => (
+  <div
+    style={{
+      minHeight: "100vh",
+      display: "flex",
+      flexDirection: "column",
+      backgroundColor: "#fff",
+    }}
+  >
+    <Header title="ShopAK" />
+    <main style={{ flex: 1 }}>{children}</main>
+    <Footer
+      studentName="Võ Thành Lợi & Lê Nguyễn Hoàng Long"
+      courseName="Full-Stack Web Development"
+    />
+  </div>
+);
 
 const App = () => {
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        backgroundColor: "#fff",
-      }}
-    >
-      <Header title="ShopAK" />
-      <main style={{ flex: 1 }}>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/products" element={<ProductPage />} />
-          <Route path="/products/:id" element={<ProductDetailPage />} />
-          <Route path="/cart" element={<CartPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+    <Routes>
+      {/* ── Admin section — sidebar riêng, chỉ ADMIN vào được ── */}
+      <Route element={<AdminRoute />}>
+        <Route element={<AdminLayout />}>
+          <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+          <Route path="/admin/products" element={<AdminProductsPage />} />
+          <Route path="/admin/products/new" element={<ProductCreatePage />} />
+          <Route
+            path="/admin/products/:id/edit"
+            element={<ProductEditPage />}
+          />
+          <Route path="/admin/orders" element={<AdminOrdersPage />} />
+          <Route path="/admin/orders/:id" element={<OrderDetailPage />} />
+          <Route path="/admin/users" element={<AdminUsersPage />} />
+        </Route>
+      </Route>
 
-          {/* Payment result pages — công khai vì cổng thanh toán redirect vào đây */}
-          <Route path="/payment/stripe/success" element={<StripeSuccess />} />
-          <Route path="/payment/stripe/cancel" element={<StripeCancel />} />
-          <Route path="/payment/paypal/success" element={<PaypalSuccess />} />
-          <Route path="/payment/paypal/cancel" element={<PaypalCancel />} />
-          <Route path="/payment/vnpay/success" element={<VnpaySuccess />} />
-          <Route path="/payment/vnpay/cancel" element={<VnpayCancel />} />
-
-          {/* Cần đăng nhập */}
-          <Route element={<PrivateRoute />}>
-            <Route path="/orders" element={<OrderHistoryPage />} />
-            <Route path="/orders/:id" element={<OrderDetailPage />} />
-            <Route path="/orders/:id/payment" element={<OrderPaymentPage />} />
-          </Route>
-
-          {/* Chỉ ADMIN */}
-          <Route element={<AdminRoute />}>
-            <Route path="/admin/products/new" element={<ProductCreatePage />} />
-            <Route path="/admin/orders" element={<AdminOrdersPage />} />
-            <Route path="/admin/orders/:id" element={<OrderDetailPage />} />
-          </Route>
-
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </main>
-      <Footer
-        studentName="Võ Thành Lợi & Lê Nguyễn Hoàng Long"
-        courseName="Full-Stack Web Development"
+      {/* ── Store section ── */}
+      <Route
+        path="/"
+        element={
+          <StoreLayout>
+            <HomePage />
+          </StoreLayout>
+        }
       />
-    </div>
+      <Route
+        path="/products"
+        element={
+          <StoreLayout>
+            <ProductPage />
+          </StoreLayout>
+        }
+      />
+      <Route
+        path="/products/:id"
+        element={
+          <StoreLayout>
+            <ProductDetailPage />
+          </StoreLayout>
+        }
+      />
+      <Route
+        path="/cart"
+        element={
+          <StoreLayout>
+            <CartPage />
+          </StoreLayout>
+        }
+      />
+      <Route
+        path="/login"
+        element={
+          <StoreLayout>
+            <LoginPage />
+          </StoreLayout>
+        }
+      />
+      <Route
+        path="/register"
+        element={
+          <StoreLayout>
+            <RegisterPage />
+          </StoreLayout>
+        }
+      />
+
+      <Route
+        path="/payment/stripe/success"
+        element={
+          <StoreLayout>
+            <StripeSuccess />
+          </StoreLayout>
+        }
+      />
+      <Route
+        path="/payment/stripe/cancel"
+        element={
+          <StoreLayout>
+            <StripeCancel />
+          </StoreLayout>
+        }
+      />
+      <Route
+        path="/payment/paypal/success"
+        element={
+          <StoreLayout>
+            <PaypalSuccess />
+          </StoreLayout>
+        }
+      />
+      <Route
+        path="/payment/paypal/cancel"
+        element={
+          <StoreLayout>
+            <PaypalCancel />
+          </StoreLayout>
+        }
+      />
+      <Route
+        path="/payment/vnpay/success"
+        element={
+          <StoreLayout>
+            <VnpaySuccess />
+          </StoreLayout>
+        }
+      />
+      <Route
+        path="/payment/vnpay/cancel"
+        element={
+          <StoreLayout>
+            <VnpayCancel />
+          </StoreLayout>
+        }
+      />
+
+      <Route element={<PrivateRoute />}>
+        <Route
+          path="/orders"
+          element={
+            <StoreLayout>
+              <OrderHistoryPage />
+            </StoreLayout>
+          }
+        />
+        <Route
+          path="/orders/:id"
+          element={
+            <StoreLayout>
+              <OrderDetailPage />
+            </StoreLayout>
+          }
+        />
+        <Route
+          path="/orders/:id/payment"
+          element={
+            <StoreLayout>
+              <OrderPaymentPage />
+            </StoreLayout>
+          }
+        />
+      </Route>
+
+      <Route
+        path="*"
+        element={
+          <StoreLayout>
+            <NotFound />
+          </StoreLayout>
+        }
+      />
+    </Routes>
   );
 };
 

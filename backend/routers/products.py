@@ -68,7 +68,7 @@ def create_product(payload: ProductCreate, db: Session = Depends(get_db)):
     )
 
 
-@router.put("/{product_id}", response_model=ProductRead)
+@router.put("/{product_id}", response_model=ProductRead, dependencies=[Depends(require_admin)])
 def update_product(product_id: int, payload: ProductUpdate, db: Session = Depends(get_db)):
     product = db.query(ProductDB).filter(ProductDB.id == product_id).first()
     if not product:

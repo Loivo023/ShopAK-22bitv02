@@ -12,17 +12,21 @@ const CartPage = () => {
     totalPrice,
     clearCart,
   } = useCart();
+  const [shippingAddress, setShippingAddress] = useState("");
   const [placingOrder, setPlacingOrder] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
   const handleCheckout = async () => {
     if (items.length === 0) return;
+    if (!shippingAddress.trim()) {
+      setError("Please enter a shipping address.");
+      return;
+    }
     setPlacingOrder(true);
     setError("");
-
     try {
-      const order = await ordersApi.checkout(items);
+      const order = await ordersApi.checkout(items, shippingAddress.trim());
       clearCart();
       navigate(`/orders/${order.id}`);
     } catch (err) {
@@ -96,7 +100,6 @@ const CartPage = () => {
                 borderRadius: "6px",
               }}
             />
-
             <div style={{ flex: 1 }}>
               <p style={{ margin: 0, fontWeight: "500", color: "#111" }}>
                 {item.name}
@@ -111,7 +114,6 @@ const CartPage = () => {
                 ${item.price.toFixed(2)}
               </p>
             </div>
-
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <button
                 onClick={() => updateQuantity(item.id, item.quantity - 1)}
@@ -159,7 +161,6 @@ const CartPage = () => {
                 +
               </button>
             </div>
-
             <p
               style={{
                 minWidth: "70px",
@@ -170,7 +171,6 @@ const CartPage = () => {
             >
               ${(item.price * item.quantity).toFixed(2)}
             </p>
-
             <button
               onClick={() => removeFromCart(item.id)}
               style={{
@@ -189,6 +189,36 @@ const CartPage = () => {
         ))}
       </div>
 
+      <div style={{ marginTop: "20px" }}>
+        <label
+          style={{
+            display: "block",
+            marginBottom: "6px",
+            fontSize: "0.88rem",
+            color: "#333",
+            fontWeight: "500",
+          }}
+        >
+          Shipping Address
+        </label>
+        <textarea
+          value={shippingAddress}
+          onChange={(e) => setShippingAddress(e.target.value)}
+          placeholder="Street, city, district, country..."
+          rows={2}
+          style={{
+            width: "100%",
+            padding: "10px 12px",
+            borderRadius: "6px",
+            border: "1px solid #ddd",
+            fontSize: "0.9rem",
+            boxSizing: "border-box",
+            resize: "vertical",
+            fontFamily: "inherit",
+          }}
+        />
+      </div>
+
       {error && (
         <div
           style={{
@@ -205,7 +235,7 @@ const CartPage = () => {
         </div>
       )}
 
-      <div style={{ marginTop: "24px", display: "flex", gap: "12px" }}>
+      <div style={{ marginTop: "20px", display: "flex", gap: "12px" }}>
         <button
           onClick={clearCart}
           style={{

@@ -3,27 +3,34 @@ import { useParams, Link } from "react-router-dom";
 import { ordersApi } from "../api/ordersApi";
 import { useAuth } from "../auth/useAuth";
 
-const ALLOWED_STATUSES = [
-  "PLACED",
-  "PROCESSING",
-  "SHIPPED",
-  "COMPLETED",
-  "CANCELED",
-];
-
-const statusColor = {
-  PLACED: "#1976d2",
-  PROCESSING: "#f59e0b",
-  SHIPPED: "#8e24aa",
-  COMPLETED: "#2e7d32",
-  CANCELED: "#e53935",
+const STATUS_META = {
+  PLACED: { color: "#1976d2", label: "Placed" },
+  PROCESSING: { color: "#f59e0b", label: "Processing" },
+  SHIPPED: { color: "#8e24aa", label: "Shipped" },
+  COMPLETED: { color: "#2e7d32", label: "Completed" },
+  CANCELED: { color: "#e53935", label: "Canceled" },
 };
+
+const NEXT_STATUS_OPTIONS = {
+  PLACED: ["PROCESSING", "CANCELED"],
+  PROCESSING: ["CANCELED"],
+  SHIPPED: ["COMPLETED"],
+  COMPLETED: [],
+  CANCELED: [],
+};
+
+const EDITABLE_ITEM_STATUSES = ["PLACED", "PROCESSING"];
 
 const OrderDetailPage = () => {
   const { id } = useParams();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [actionError, setActionError] = useState("");
+  const [showShipForm, setShowShipForm] = useState(false);
+  const [carrier, setCarrier] = useState("");
+  const [trackingNumber, setTrackingNumber] = useState("");
+  const [shipping, setShipping] = useState(false);
   const { role } = useAuth();
   const isAdmin = role === "ADMIN";
 
@@ -44,18 +51,46 @@ const OrderDetailPage = () => {
     fetchOrder();
   }, [id]);
 
-  const handleStatusChange = async (e) => {
-    const newStatus = e.target.value;
+  const handleStatusChange = async (newStatus) => {
+    setActionError("");
     try {
       const updated = await ordersApi.adminUpdateStatus(order.id, newStatus);
       setOrder(updated);
-    } catch {
-      alert("Failed to update status");
+    } catch (err) {
+      const detail = err.response?.data?.detail;
+      setActionError(
+        typeof detail === "string" ? detail : "Failed to update status.",
+      );
+    }
+  };
+
+  const handleShip = async (e) => {
+    e.preventDefault();
+    setShipping(true);
+    setActionError("");
+    try {
+      const updated = await ordersApi.shipOrder(
+        order.id,
+        carrier,
+        trackingNumber,
+      );
+      setOrder(updated);
+      setShowShipForm(false);
+      setCarrier("");
+      setTrackingNumber("");
+    } catch (err) {
+      const detail = err.response?.data?.detail;
+      setActionError(
+        typeof detail === "string" ? detail : "Failed to ship order.",
+      );
+    } finally {
+      setShipping(false);
     }
   };
 
   const handleAdminUpdateQuantity = async (itemId, newQty) => {
     if (newQty <= 0) return;
+    setActionError("");
     try {
       const updated = await ordersApi.adminUpdateItemQuantity(
         order.id,
@@ -63,8 +98,11 @@ const OrderDetailPage = () => {
         newQty,
       );
       setOrder(updated);
-    } catch {
-      alert("Failed to update quantity");
+    } catch (err) {
+      const detail = err.response?.data?.detail;
+      setActionError(
+        typeof detail === "string" ? detail : "Failed to update quantity.",
+      );
     }
   };
 
@@ -82,6 +120,14 @@ const OrderDetailPage = () => {
     );
   if (!order) return null;
 
+  const meta = STATUS_META[order.status] || {
+    color: "#757575",
+    label: order.status,
+  };
+  const itemsEditable =
+    isAdmin && EDITABLE_ITEM_STATUSES.includes(order.status);
+  const nextOptions = NEXT_STATUS_OPTIONS[order.status] || [];
+
   return (
     <section
       style={{ padding: "24px 16px", maxWidth: "800px", margin: "0 auto" }}
@@ -97,74 +143,300 @@ const OrderDetailPage = () => {
         ← Back to Orders
       </Link>
 
-      <h2 style={{ color: "#111", marginTop: "16px", marginBottom: "4px" }}>
-        Order #{order.id}
-      </h2>
-      <p style={{ color: "#888", fontSize: "0.9rem", marginBottom: "16px" }}>
-        {new Date(order.created_at).toLocaleString()}
-      </p>
-
       <div
         style={{
           display: "flex",
-          alignItems: "center",
-          gap: "16px",
-          marginBottom: "20px",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          marginTop: "16px",
+          flexWrap: "wrap",
+          gap: "12px",
         }}
       >
         <div>
-          <span style={{ color: "#000000", fontSize: "0.9rem" }}>Status: </span>
-          {isAdmin ? (
-            <select
-              value={order.status}
-              onChange={handleStatusChange}
-              style={{
-                padding: "4px 10px",
-                borderRadius: "6px",
-                border: "1px solid #ddd",
-                fontSize: "0.9rem",
-                color: "#ffffff",
-              }}
-            >
-              {ALLOWED_STATUSES.map((st) => (
-                <option key={st} value={st}>
-                  {st}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <span
-              style={{
-                padding: "3px 12px",
-                borderRadius: "20px",
-                fontSize: "0.82rem",
-                fontWeight: "600",
-                color: "#fff",
-                backgroundColor: statusColor[order.status] || "#757575",
-              }}
-            >
-              {order.status}
-            </span>
-          )}
+          <h2 style={{ color: "#111", margin: 0 }}>Order #{order.id}</h2>
+          <p style={{ color: "#888", fontSize: "0.9rem", margin: "4px 0 0" }}>
+            {new Date(order.created_at).toLocaleString()}
+          </p>
         </div>
-
-        <p
+        <span
           style={{
-            margin: 0,
-            fontWeight: "bold",
-            color: "#1976d2",
-            fontSize: "1.1rem",
+            padding: "5px 14px",
+            borderRadius: "20px",
+            fontSize: "0.85rem",
+            fontWeight: "700",
+            color: "#fff",
+            backgroundColor: meta.color,
           }}
         >
-          Total: ${order.total_amount.toFixed(2)}
-        </p>
+          {meta.label}
+        </span>
       </div>
-      {order.status !== "PAID" && !isAdmin && (
+
+      {(order.status === "COMPLETED" || order.status === "CANCELED") && (
+        <div
+          style={{
+            marginTop: "16px",
+            padding: "10px 14px",
+            borderRadius: "8px",
+            backgroundColor: "#f5f5f5",
+            color: "#666",
+            fontSize: "0.85rem",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+          }}
+        >
+          🔒 This order is {order.status.toLowerCase()} and can no longer be
+          modified.
+        </div>
+      )}
+
+      {order.tracking_number && (
+        <div
+          style={{
+            marginTop: "16px",
+            padding: "16px",
+            borderRadius: "10px",
+            border: "1px solid #eee",
+            backgroundColor: "#fafbff",
+          }}
+        >
+          <p
+            style={{
+              margin: 0,
+              fontWeight: "600",
+              color: "#111",
+              fontSize: "0.92rem",
+            }}
+          >
+            📦 Shipping Info
+          </p>
+          <div
+            style={{
+              display: "flex",
+              gap: "24px",
+              marginTop: "10px",
+              flexWrap: "wrap",
+            }}
+          >
+            <div>
+              <p style={{ margin: 0, color: "#888", fontSize: "0.78rem" }}>
+                Carrier
+              </p>
+              <p
+                style={{ margin: "2px 0 0", color: "#111", fontWeight: "500" }}
+              >
+                {order.carrier}
+              </p>
+            </div>
+            <div>
+              <p style={{ margin: 0, color: "#888", fontSize: "0.78rem" }}>
+                Tracking Number
+              </p>
+              <p
+                style={{ margin: "2px 0 0", color: "#111", fontWeight: "500" }}
+              >
+                {order.tracking_number}
+              </p>
+            </div>
+            <div>
+              <p style={{ margin: 0, color: "#888", fontSize: "0.78rem" }}>
+                Shipped At
+              </p>
+              <p
+                style={{ margin: "2px 0 0", color: "#111", fontWeight: "500" }}
+              >
+                {order.shipped_at
+                  ? new Date(order.shipped_at).toLocaleString()
+                  : "-"}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {order.shipping_address && (
+        <div style={{ marginTop: "12px", fontSize: "0.88rem", color: "#666" }}>
+          <strong style={{ color: "#111" }}>Ship to:</strong>{" "}
+          {order.shipping_address}
+        </div>
+      )}
+
+      <p
+        style={{
+          marginTop: "16px",
+          fontWeight: "bold",
+          color: "#1976d2",
+          fontSize: "1.2rem",
+        }}
+      >
+        Total: ${order.total_amount.toFixed(2)}
+      </p>
+
+      {isAdmin && (
+        <div
+          style={{
+            marginTop: "16px",
+            padding: "16px",
+            borderRadius: "10px",
+            border: "1px solid #eee",
+            display: "flex",
+            flexDirection: "column",
+            gap: "12px",
+          }}
+        >
+          <p
+            style={{
+              margin: 0,
+              fontWeight: "600",
+              color: "#111",
+              fontSize: "0.9rem",
+            }}
+          >
+            Admin Actions
+          </p>
+
+          {actionError && (
+            <div
+              style={{
+                padding: "8px 12px",
+                backgroundColor: "#fff3f3",
+                border: "1px solid #f5c2c2",
+                borderRadius: "6px",
+                color: "#c0392b",
+                fontSize: "0.85rem",
+              }}
+            >
+              {actionError}
+            </div>
+          )}
+
+          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+            {order.status === "PROCESSING" && !showShipForm && (
+              <button
+                onClick={() => setShowShipForm(true)}
+                style={{
+                  padding: "8px 16px",
+                  backgroundColor: "#8e24aa",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  fontSize: "0.88rem",
+                  fontWeight: "500",
+                }}
+              >
+                📦 Mark as Shipped
+              </button>
+            )}
+
+            {nextOptions.map((s) => (
+              <button
+                key={s}
+                onClick={() => handleStatusChange(s)}
+                style={{
+                  padding: "8px 16px",
+                  backgroundColor:
+                    s === "CANCELED"
+                      ? "#fff"
+                      : STATUS_META[s]?.color || "#1976d2",
+                  color: s === "CANCELED" ? "#e53935" : "#fff",
+                  border: s === "CANCELED" ? "1px solid #e53935" : "none",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  fontSize: "0.88rem",
+                  fontWeight: "500",
+                }}
+              >
+                {s === "CANCELED"
+                  ? "Cancel Order"
+                  : `Mark as ${STATUS_META[s]?.label}`}
+              </button>
+            ))}
+          </div>
+
+          {showShipForm && (
+            <form
+              onSubmit={handleShip}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "10px",
+                padding: "14px",
+                backgroundColor: "#faf5ff",
+                borderRadius: "8px",
+              }}
+            >
+              <input
+                placeholder="Carrier (e.g. GHTK, Viettel Post)"
+                value={carrier}
+                onChange={(e) => setCarrier(e.target.value)}
+                required
+                style={{
+                  padding: "8px 10px",
+                  borderRadius: "6px",
+                  border: "1px solid #ddd",
+                  fontSize: "0.88rem",
+                }}
+              />
+              <input
+                placeholder="Tracking number"
+                value={trackingNumber}
+                onChange={(e) => setTrackingNumber(e.target.value)}
+                required
+                style={{
+                  padding: "8px 10px",
+                  borderRadius: "6px",
+                  border: "1px solid #ddd",
+                  fontSize: "0.88rem",
+                }}
+              />
+              <div style={{ display: "flex", gap: "8px" }}>
+                <button
+                  type="submit"
+                  disabled={shipping}
+                  style={{
+                    padding: "8px 16px",
+                    backgroundColor: "#8e24aa",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                    fontSize: "0.85rem",
+                    fontWeight: "500",
+                    opacity: shipping ? 0.7 : 1,
+                  }}
+                >
+                  {shipping ? "Shipping..." : "Confirm Shipment"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowShipForm(false)}
+                  style={{
+                    padding: "8px 16px",
+                    backgroundColor: "#fff",
+                    color: "#666",
+                    border: "1px solid #ddd",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                    fontSize: "0.85rem",
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      )}
+
+      {!isAdmin && order.status === "PLACED" && (
         <Link
           to={`/orders/${order.id}/payment`}
           style={{
             display: "inline-block",
-            marginTop: "12px",
+            marginTop: "16px",
             padding: "10px 24px",
             backgroundColor: "#1976d2",
             color: "#fff",
@@ -177,7 +449,14 @@ const OrderDetailPage = () => {
         </Link>
       )}
 
-      <h3 style={{ color: "#111", fontSize: "1.05rem", marginBottom: "12px" }}>
+      <h3
+        style={{
+          color: "#111",
+          fontSize: "1.05rem",
+          marginTop: "28px",
+          marginBottom: "12px",
+        }}
+      >
         Items
       </h3>
 
@@ -209,7 +488,7 @@ const OrderDetailPage = () => {
             </p>
 
             <div style={{ width: "100px", textAlign: "center" }}>
-              {isAdmin ? (
+              {itemsEditable ? (
                 <div
                   style={{
                     display: "flex",

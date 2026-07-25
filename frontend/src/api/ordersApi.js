@@ -2,7 +2,7 @@ import axiosClient from "./axiosClient";
 import { handleApiError } from "./errorHandler";
 
 export const ordersApi = {
-  async checkout(cartItems) {
+  async checkout(cartItems, shippingAddress) {
     try {
       const payload = {
         items: cartItems.map((item) => ({
@@ -11,6 +11,7 @@ export const ordersApi = {
           price: item.price,
           quantity: item.quantity,
         })),
+        shipping_address: shippingAddress || null,
       };
       const response = await axiosClient.post("/orders/checkout", payload);
       return response.data;
@@ -74,6 +75,19 @@ export const ordersApi = {
       return response.data;
     } catch (error) {
       handleApiError(error, "Failed to update item quantity");
+      throw error;
+    }
+  },
+
+  async shipOrder(orderId, carrier, trackingNumber) {
+    try {
+      const response = await axiosClient.post(`/orders/${orderId}/ship`, {
+        carrier,
+        tracking_number: trackingNumber,
+      });
+      return response.data;
+    } catch (error) {
+      handleApiError(error, "Failed to mark order as shipped");
       throw error;
     }
   },

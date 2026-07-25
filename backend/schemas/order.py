@@ -9,6 +9,7 @@ class OrderItemCreate(BaseModel):
 
 class CheckoutRequest(BaseModel):
     items: List[OrderItemCreate]
+    shipping_address: Optional[str] = None
 
 class OrderItemRead(BaseModel):
     id:            int
@@ -22,11 +23,15 @@ class OrderItemRead(BaseModel):
         from_attributes = True
 
 class OrderRead(BaseModel):
-    id:           int
-    status:       str
-    total_amount: float
-    created_at:   str
-    items:        List[OrderItemRead]
+    id:               int
+    status:           str
+    total_amount:     float
+    created_at:       str
+    shipping_address: Optional[str] = None
+    carrier:          Optional[str] = None
+    tracking_number:  Optional[str] = None
+    shipped_at:       Optional[str] = None
+    items:            List[OrderItemRead]
 
     class Config:
         from_attributes = True
@@ -41,7 +46,6 @@ class OrderSummary(BaseModel):
         from_attributes = True
 
 
-# ── Admin schemas ──
 ALLOWED_STATUSES = ["PLACED", "PROCESSING", "SHIPPED", "COMPLETED", "CANCELED"]
 
 class OrderStatusUpdate(BaseModel):
@@ -57,3 +61,7 @@ class OrderStatusUpdate(BaseModel):
 class OrderItemQuantityUpdate(BaseModel):
     item_id:  int
     quantity: int = Field(..., gt=0)
+
+class ShipOrderRequest(BaseModel):
+    carrier:         str = Field(..., min_length=2, max_length=50)
+    tracking_number: str = Field(..., min_length=2, max_length=100)

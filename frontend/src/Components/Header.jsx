@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../auth/useAuth";
 import { clearToken } from "../auth/token";
@@ -87,6 +87,27 @@ const Header = ({ title }) => {
           </NavLink>
         ))}
 
+        {role === "ADMIN" && (
+          <Link
+            to="/admin/dashboard"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "6px 16px",
+              borderRadius: "20px",
+              background: "linear-gradient(135deg, #6d5ef6, #4f46e5)",
+              color: "#fff",
+              textDecoration: "none",
+              fontSize: "0.9rem",
+              fontWeight: "600",
+              boxShadow: "0 2px 8px rgba(79,70,229,0.3)",
+            }}
+          >
+            ⚙ Admin Panel
+          </Link>
+        )}
+
         {isAuthenticated && (
           <>
             <span
@@ -111,7 +132,6 @@ const Header = ({ title }) => {
                 fontSize: "0.9rem",
                 fontWeight: "500",
                 cursor: "pointer",
-                transition: "all 0.2s ease",
               }}
             >
               Logout
