@@ -1,9 +1,12 @@
+import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-import os
 import mimetypes
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from database import engine, Base
 from models.product import ProductDB
@@ -19,13 +22,17 @@ from routers.admin_stats import router as admin_stats_router
 
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="ShopAK API", version="2.3.0")
+app = FastAPI(title="ShopAK API", version="3.0.0")
+
+# Đọc allowed origins từ env, phân tách bằng dấu phẩy
+allowed_origins_str = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173")
+allowed_origins = [origin.strip() for origin in allowed_origins_str.split(",")]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
@@ -41,7 +48,7 @@ app.include_router(admin_stats_router)
 
 @app.get("/")
 def root():
-    return {"message": "ShopAK API v2 running with PostgreSQL"}
+    return {"message": "ShopAK API v3 running in production"}
 
 @app.get("/images/{filename}")
 def get_image(filename: str):

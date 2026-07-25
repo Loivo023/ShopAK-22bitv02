@@ -2,8 +2,8 @@ import axios from "axios";
 import { getToken, clearToken } from "../auth/token";
 
 const axiosClient = axios.create({
-  baseURL: "http://localhost:8000",
-  timeout: 10000,
+  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8000",
+  timeout: 15000,
 });
 
 axiosClient.interceptors.request.use((config) => {
