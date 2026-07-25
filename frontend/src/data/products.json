@@ -4,79 +4,99 @@
     "name": "Gaming Laptop",
     "price": 1500,
     "category": "Electronics",
-    "imageUrl": "https://via.placeholder.com/150",
-    "description": "High performance laptop for gaming and work."
+    "description": "High performance laptop for gaming and work.",
+    "imageUrl": "https://images.unsplash.com/photo-1603302576837-37561b2e2302?w=300",
+    "imagePath": "",
+    "costPrice": 1000
   },
   {
     "id": 2,
     "name": "Wireless Mouse",
     "price": 25,
     "category": "Accessories",
-    "imageUrl": "https://via.placeholder.com/150",
-    "description": "Comfortable mouse with long battery life."
+    "description": "Comfortable mouse with long battery life.",
+    "imageUrl": "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=300",
+    "imagePath": "",
+    "costPrice": 12
   },
   {
     "id": 3,
     "name": "Mechanical Keyboard",
     "price": 85,
     "category": "Accessories",
-    "imageUrl": "https://via.placeholder.com/150",
-    "description": "Tactile mechanical switches with RGB backlight."
+    "description": "Tactile mechanical switches with RGB backlight.",
+    "imageUrl": "https://images.unsplash.com/photo-1541140532154-b024d705b90a?w=300",
+    "imagePath": "",
+    "costPrice": 50
   },
   {
     "id": 4,
     "name": "4K Monitor",
     "price": 450,
     "category": "Electronics",
-    "imageUrl": "https://via.placeholder.com/150",
-    "description": "27-inch 4K UHD display with 144Hz refresh rate."
+    "description": "27-inch 4K UHD display with 144Hz refresh rate.",
+    "imageUrl": "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=300",
+    "imagePath": "",
+    "costPrice": 300
   },
   {
     "id": 5,
     "name": "Noise Cancelling Headphones",
     "price": 199,
     "category": "Audio",
-    "imageUrl": "https://via.placeholder.com/150",
-    "description": "Over-ear headphones with active noise cancellation."
+    "description": "Over-ear headphones with active noise cancellation.",
+    "imageUrl": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300",
+    "imagePath": "",
+    "costPrice": 100
   },
   {
     "id": 6,
     "name": "USB-C Hub",
     "price": 40,
     "category": "Accessories",
-    "imageUrl": "https://via.placeholder.com/150",
-    "description": "7-in-1 hub with HDMI, USB 3.0, and SD card reader."
+    "description": "7-in-1 hub with HDMI, USB 3.0, and SD card reader.",
+    "imageUrl": "https://images.unsplash.com/photo-1618410320928-25228d811631?w=300",
+    "imagePath": "",
+    "costPrice": 20
   },
   {
     "id": 7,
     "name": "Webcam HD 1080p",
     "price": 65,
     "category": "Electronics",
-    "imageUrl": "https://via.placeholder.com/150",
-    "description": "Full HD webcam with built-in microphone and auto-focus."
+    "description": "Full HD webcam with built-in microphone and auto-focus.",
+    "imageUrl": "https://images.unsplash.com/photo-1587826080692-f439cd0b70da?w=300",
+    "imagePath": "",
+    "costPrice": 35
   },
   {
     "id": 8,
     "name": "Gaming Chair",
     "price": 320,
     "category": "Furniture",
-    "imageUrl": "https://via.placeholder.com/150",
-    "description": "Ergonomic gaming chair with lumbar and neck support."
+    "description": "Ergonomic gaming chair with lumbar and neck support.",
+    "imageUrl": "https://images.unsplash.com/photo-1598550476439-6847785fcea6?w=300",
+    "imagePath": "",
+    "costPrice": 150
   },
   {
     "id": 9,
     "name": "External SSD 1TB",
     "price": 110,
     "category": "Storage",
-    "imageUrl": "https://via.placeholder.com/150",
-    "description": "Portable SSD with USB 3.2 and up to 1050MB/s read speed."
+    "description": "Portable SSD with USB 3.2 and up to 1050MB/s read speed.",
+    "imageUrl": "https://images.unsplash.com/photo-1597848212624-a19eb35e2651?w=300",
+    "imagePath": "",
+    "costPrice": 60
   },
   {
     "id": 10,
     "name": "Smartphone Stand",
     "price": 15,
     "category": "Accessories",
-    "imageUrl": "https://via.placeholder.com/150",
-    "description": "Adjustable aluminum desk stand for phones and tablets."
+    "description": "Adjustable aluminum desk stand for phones and tablets.",
+    "imageUrl": "https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=300",
+    "imagePath": "",
+    "costPrice": 5
   }
 ]

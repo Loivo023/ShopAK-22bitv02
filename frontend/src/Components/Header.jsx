@@ -1,9 +1,32 @@
-// src/components/Header.jsx
-import { useState } from "react";
+import { NavLink, Link, useNavigate } from "react-router-dom";
+import { useCart } from "../context/CartContext";
+import { useAuth } from "../auth/useAuth";
+import { clearToken } from "../auth/token";
 
 const Header = ({ title }) => {
-  const navItems = ["Home", "Products", "Cart", "Login"];
-  const [activeItem, setActiveItem] = useState("Home");
+  const { totalQuantity, clearCart } = useCart();
+  const { isAuthenticated, role, user } = useAuth();
+  const navigate = useNavigate();
+
+  const navItems = [
+    { label: "Home", to: "/" },
+    { label: "Products", to: "/products" },
+    { label: "Cart", to: "/cart" },
+    ...(isAuthenticated
+      ? [
+          {
+            label: "Orders",
+            to: role === "ADMIN" ? "/admin/orders" : "/orders",
+          },
+        ]
+      : [{ label: "Login", to: "/login" }]),
+  ];
+
+  const handleLogout = () => {
+    clearToken();
+    clearCart();
+    navigate("/login");
+  };
 
   return (
     <header
@@ -17,33 +40,105 @@ const Header = ({ title }) => {
         position: "sticky",
         top: 0,
         zIndex: 100,
+        boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
       }}
     >
       <h1 style={{ margin: 0, fontSize: "1.4rem", color: "#1976d2" }}>
         {title}
       </h1>
-      {navItems.map((item) => {
-        const isActive = item === activeItem;
-        return (
-          <button
-            key={item}
-            onClick={() => setActiveItem(item)}
-            style={{
-              padding: "6px 14px",
+      <nav style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+        {navItems.map((item) => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            end={item.to === "/"}
+            style={({ isActive }) => ({
+              padding: "6px 16px",
               borderRadius: "20px",
-              border: "none",
-              cursor: "pointer",
+              textDecoration: "none",
               fontSize: "0.95rem",
               fontWeight: isActive ? "600" : "400",
               color: isActive ? "#fff" : "#555",
               backgroundColor: isActive ? "#1976d2" : "transparent",
               transition: "all 0.2s ease",
+              position: "relative",
+            })}
+          >
+            {item.label}
+            {item.label === "Cart" && totalQuantity > 0 && (
+              <span
+                style={{
+                  position: "absolute",
+                  top: "-6px",
+                  right: "-4px",
+                  backgroundColor: "#e53935",
+                  color: "#fff",
+                  fontSize: "0.65rem",
+                  fontWeight: "bold",
+                  padding: "1px 5px",
+                  borderRadius: "20px",
+                  minWidth: "16px",
+                  textAlign: "center",
+                }}
+              >
+                {totalQuantity}
+              </span>
+            )}
+          </NavLink>
+        ))}
+
+        {role === "ADMIN" && (
+          <Link
+            to="/admin/dashboard"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "6px 16px",
+              borderRadius: "20px",
+              background: "linear-gradient(135deg, #6d5ef6, #4f46e5)",
+              color: "#fff",
+              textDecoration: "none",
+              fontSize: "0.9rem",
+              fontWeight: "600",
+              boxShadow: "0 2px 8px rgba(79,70,229,0.3)",
             }}
           >
-            {item}
-          </button>
-        );
-      })}
+            ⚙ Admin Panel
+          </Link>
+        )}
+
+        {isAuthenticated && (
+          <>
+            <span
+              style={{
+                fontSize: "0.85rem",
+                color: "#888",
+                marginLeft: "4px",
+                paddingLeft: "12px",
+                borderLeft: "1px solid #eee",
+              }}
+            >
+              {user?.full_name || user?.email}
+            </span>
+            <button
+              onClick={handleLogout}
+              style={{
+                padding: "6px 16px",
+                borderRadius: "20px",
+                border: "1px solid #e53935",
+                backgroundColor: "#fff",
+                color: "#e53935",
+                fontSize: "0.9rem",
+                fontWeight: "500",
+                cursor: "pointer",
+              }}
+            >
+              Logout
+            </button>
+          </>
+        )}
+      </nav>
     </header>
   );
 };
