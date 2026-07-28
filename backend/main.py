@@ -57,3 +57,14 @@ def get_image(filename: str):
         raise HTTPException(status_code=404, detail="Image not found")
     content_type, _ = mimetypes.guess_type(path)
     return FileResponse(path, media_type=content_type or "application/octet-stream")
+
+# Chỉ bật Swagger docs khi ENVIRONMENT=development (mặc định là production, ẩn docs)
+is_dev = os.getenv("ENVIRONMENT", "production") == "development"
+
+app = FastAPI(
+    title="ShopAK API",
+    version="3.0.0",
+    docs_url="/docs" if is_dev else None,
+    redoc_url="/redoc" if is_dev else None,
+    openapi_url="/openapi.json" if is_dev else None,
+)
