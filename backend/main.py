@@ -1,3 +1,4 @@
+# Force rebuild - Thu Jul 30 15:16:15 SEAST 2026
 import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -68,3 +69,7 @@ app = FastAPI(
     redoc_url="/redoc" if is_dev else None,
     openapi_url="/openapi.json" if is_dev else None,
 )
+
+@app.get("/debug-cors")
+def debug_cors():
+    return {"allowed_origins": allowed_origins}
