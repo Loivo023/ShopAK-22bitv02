@@ -1,4 +1,3 @@
-# Force rebuild - Thu Jul 30 15:16:15 SEAST 2026
 import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -23,7 +22,16 @@ from routers.admin_stats import router as admin_stats_router
 
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="ShopAK API", version="3.0.0")
+# Chỉ bật Swagger docs khi ENVIRONMENT=development (mặc định production, ẩn docs)
+is_dev = os.getenv("ENVIRONMENT", "production") == "development"
+
+app = FastAPI(
+    title="ShopAK API",
+    version="3.0.0",
+    docs_url="/docs" if is_dev else None,
+    redoc_url="/redoc" if is_dev else None,
+    openapi_url="/openapi.json" if is_dev else None,
+)
 
 # Đọc allowed origins từ env, phân tách bằng dấu phẩy
 allowed_origins_str = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173")
@@ -47,9 +55,11 @@ app.include_router(orders_router)
 app.include_router(payments_router)
 app.include_router(admin_stats_router)
 
+
 @app.get("/")
 def root():
     return {"message": "ShopAK API v3 running in production"}
+
 
 @app.get("/images/{filename}")
 def get_image(filename: str):
@@ -59,16 +69,6 @@ def get_image(filename: str):
     content_type, _ = mimetypes.guess_type(path)
     return FileResponse(path, media_type=content_type or "application/octet-stream")
 
-# Chỉ bật Swagger docs khi ENVIRONMENT=development (mặc định là production, ẩn docs)
-is_dev = os.getenv("ENVIRONMENT", "production") == "development"
-
-app = FastAPI(
-    title="ShopAK API",
-    version="3.0.0",
-    docs_url="/docs" if is_dev else None,
-    redoc_url="/redoc" if is_dev else None,
-    openapi_url="/openapi.json" if is_dev else None,
-)
 
 @app.get("/debug-cors")
 def debug_cors():
