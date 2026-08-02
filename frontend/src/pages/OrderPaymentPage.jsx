@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ordersApi } from "../api/ordersApi";
 import { paymentsApi } from "../api/paymentsApi";
+import { formatUSD, formatVND } from "../utils/currency";
 
 const OrderPaymentPage = () => {
   const { id } = useParams();
@@ -52,13 +53,28 @@ const OrderPaymentPage = () => {
 
   if (loading)
     return (
-      <p style={{ padding: "24px", textAlign: "center", color: "#888" }}>
-        Loading order...
-      </p>
+      <div
+        style={{
+          textAlign: "center",
+          padding: "100px 24px",
+          color: "#a39c8f",
+          backgroundColor: "#faf7f2",
+        }}
+      >
+        <p style={{ fontFamily: "Georgia, serif" }}>Loading order...</p>
+      </div>
     );
+
   if (error && !order)
     return (
-      <p style={{ padding: "24px", textAlign: "center", color: "red" }}>
+      <p
+        style={{
+          padding: "80px 24px",
+          textAlign: "center",
+          color: "#c14f2f",
+          backgroundColor: "#faf7f2",
+        }}
+      >
         {error}
       </p>
     );
@@ -66,138 +82,188 @@ const OrderPaymentPage = () => {
 
   if (order.status === "PAID") {
     return (
-      <section style={{ padding: "60px 24px", textAlign: "center" }}>
-        <h2 style={{ color: "#2e7d32", marginBottom: "8px" }}>
-          ✓ Order Already Paid
+      <div
+        style={{
+          backgroundColor: "#faf7f2",
+          minHeight: "60vh",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          textAlign: "center",
+          padding: "40px 24px",
+        }}
+      >
+        <p style={{ fontSize: "2.5rem", marginBottom: "8px" }}>✓</p>
+        <h2
+          style={{
+            fontFamily: "Georgia, serif",
+            fontSize: "1.7rem",
+            fontWeight: "400",
+            color: "#2b2825",
+            marginBottom: "10px",
+          }}
+        >
+          Order Already Paid
         </h2>
-        <p style={{ color: "#888", marginBottom: "20px" }}>
+        <p style={{ color: "#a39c8f", marginBottom: "28px" }}>
           Order #{order.id} has already been paid.
         </p>
         <Link
           to={`/orders/${order.id}`}
           style={{
-            display: "inline-block",
-            padding: "10px 24px",
-            backgroundColor: "#1976d2",
-            color: "#fff",
-            borderRadius: "6px",
+            padding: "13px 30px",
+            backgroundColor: "#2b2825",
+            color: "#faf7f2",
+            borderRadius: "30px",
             textDecoration: "none",
             fontWeight: "500",
+            fontSize: "0.88rem",
           }}
         >
           View Order
         </Link>
-      </section>
+      </div>
     );
   }
 
   const methods = [
-    { value: "stripe", label: "Stripe (Credit Card)" },
-    { value: "paypal", label: "PayPal" },
-    { value: "vnpay", label: "VNPay" },
+    { value: "stripe", label: "Credit Card (Stripe)", icon: "💳" },
+    { value: "paypal", label: "PayPal", icon: "🅿️" },
+    { value: "vnpay", label: "VNPay", icon: "🏦" },
   ];
 
   return (
-    <section
-      style={{ padding: "24px 16px", maxWidth: "480px", margin: "0 auto" }}
-    >
-      <Link
-        to={`/orders/${order.id}`}
-        style={{
-          color: "#1976d2",
-          textDecoration: "none",
-          fontSize: "0.95rem",
-        }}
-      >
-        ← Back to Order
-      </Link>
-
-      <h2 style={{ color: "#111", marginTop: "16px", marginBottom: "4px" }}>
-        Pay for Order #{order.id}
-      </h2>
-      <p
-        style={{
-          color: "#1976d2",
-          fontWeight: "bold",
-          fontSize: "1.4rem",
-          marginBottom: "24px",
-        }}
-      >
-        ${order.total_amount.toFixed(2)}
-      </p>
-
+    <div style={{ backgroundColor: "#faf7f2", minHeight: "100vh" }}>
       <div
         style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "10px",
-          marginBottom: "24px",
+          maxWidth: "460px",
+          margin: "0 auto",
+          padding: "48px 24px 90px",
         }}
       >
-        {methods.map((m) => (
-          <label
-            key={m.value}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              padding: "12px 16px",
-              borderRadius: "8px",
-              border:
-                method === m.value ? "2px solid #1976d2" : "1px solid #ddd",
-              cursor: "pointer",
-              transition: "border-color 0.2s",
-            }}
-          >
-            <input
-              type="radio"
-              name="method"
-              value={m.value}
-              checked={method === m.value}
-              onChange={(e) => setMethod(e.target.value)}
-            />
-            <span style={{ color: "#111", fontSize: "0.95rem" }}>
-              {m.label}
-            </span>
-          </label>
-        ))}
-      </div>
-
-      {error && (
-        <div
+        <Link
+          to={`/orders/${order.id}`}
           style={{
-            marginBottom: "16px",
-            padding: "10px 14px",
-            backgroundColor: "#fff3f3",
-            border: "1px solid #f5c2c2",
-            borderRadius: "6px",
-            color: "#c0392b",
-            fontSize: "0.9rem",
+            color: "#8a8378",
+            textDecoration: "none",
+            fontSize: "0.85rem",
           }}
         >
-          {error}
-        </div>
-      )}
+          ← Back to Order
+        </Link>
 
-      <button
-        onClick={handlePayNow}
-        disabled={processing}
-        style={{
-          width: "100%",
-          padding: "12px",
-          backgroundColor: "#1976d2",
-          color: "#fff",
-          border: "none",
-          borderRadius: "6px",
-          cursor: "pointer",
-          fontSize: "1rem",
-          fontWeight: "500",
-          opacity: processing ? 0.7 : 1,
-        }}
-      >
-        {processing ? "Redirecting..." : "Pay Now"}
-      </button>
-    </section>
+        <h1
+          style={{
+            fontFamily: "Georgia, serif",
+            fontSize: "1.9rem",
+            fontWeight: "400",
+            color: "#2b2825",
+            margin: "20px 0 4px",
+          }}
+        >
+          Complete Payment
+        </h1>
+        <p
+          style={{ color: "#a39c8f", fontSize: "0.86rem", marginBottom: "8px" }}
+        >
+          Order #{order.id}
+        </p>
+
+        <div style={{ marginBottom: "28px" }}>
+          <p
+            style={{
+              margin: 0,
+              fontSize: "1.7rem",
+              fontWeight: "600",
+              color: "#c1662f",
+            }}
+          >
+            {formatUSD(order.total_amount)}
+          </p>
+          <p
+            style={{ margin: "2px 0 0", fontSize: "0.82rem", color: "#a39c8f" }}
+          >
+            {formatVND(order.total_amount)}
+          </p>
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "10px",
+            marginBottom: "28px",
+          }}
+        >
+          {methods.map((m) => (
+            <label
+              key={m.value}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                padding: "16px 18px",
+                borderRadius: "16px",
+                border:
+                  method === m.value
+                    ? "2px solid #2b2825"
+                    : "1px solid #ece6dc",
+                backgroundColor: "#fff",
+                cursor: "pointer",
+                transition: "border-color 0.2s ease",
+              }}
+            >
+              <input
+                type="radio"
+                name="method"
+                value={m.value}
+                checked={method === m.value}
+                onChange={(e) => setMethod(e.target.value)}
+              />
+              <span style={{ fontSize: "1.1rem" }}>{m.icon}</span>
+              <span style={{ color: "#2b2825", fontSize: "0.9rem" }}>
+                {m.label}
+              </span>
+            </label>
+          ))}
+        </div>
+
+        {error && (
+          <div
+            style={{
+              marginBottom: "18px",
+              padding: "12px 16px",
+              backgroundColor: "#fdf0eb",
+              borderRadius: "14px",
+              color: "#c14f2f",
+              fontSize: "0.85rem",
+            }}
+          >
+            {error}
+          </div>
+        )}
+
+        <button
+          onClick={handlePayNow}
+          disabled={processing}
+          style={{
+            width: "100%",
+            padding: "15px",
+            backgroundColor: "#2b2825",
+            color: "#faf7f2",
+            border: "none",
+            borderRadius: "30px",
+            cursor: "pointer",
+            fontSize: "0.9rem",
+            fontWeight: "500",
+            opacity: processing ? 0.7 : 1,
+          }}
+        >
+          {processing ? "Redirecting..." : "Pay Now"}
+        </button>
+      </div>
+    </div>
   );
 };
 

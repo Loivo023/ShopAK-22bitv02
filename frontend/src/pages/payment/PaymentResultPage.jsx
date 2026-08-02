@@ -10,7 +10,6 @@ const PaymentResultPage = ({ provider, result }) => {
     result === "success" ? "confirming" : "canceled",
   );
   const [error, setError] = useState("");
-
   const orderId = searchParams.get("order_id");
 
   useEffect(() => {
@@ -46,19 +45,53 @@ const PaymentResultPage = ({ provider, result }) => {
   const label = providerLabels[provider];
 
   return (
-    <section style={{ padding: "60px 24px", textAlign: "center" }}>
+    <div
+      style={{
+        backgroundColor: "#faf7f2",
+        minHeight: "70vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "40px 24px",
+        textAlign: "center",
+      }}
+    >
       {status === "confirming" && (
         <>
-          <h2 style={{ color: "#888" }}>Confirming payment...</h2>
+          <div
+            style={{
+              width: "32px",
+              height: "32px",
+              border: "3px solid #ece6dc",
+              borderTop: "3px solid #c1662f",
+              borderRadius: "50%",
+              animation: "spin 0.8s linear infinite",
+              marginBottom: "20px",
+            }}
+          />
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+          <p style={{ color: "#a39c8f", fontFamily: "Georgia, serif" }}>
+            Confirming payment...
+          </p>
         </>
       )}
 
       {status === "success" && (
         <>
-          <h2 style={{ color: "#2e7d32", marginBottom: "8px" }}>
-            ✓ {label} payment successful
+          <p style={{ fontSize: "3rem", margin: "0 0 12px" }}>✓</p>
+          <h2
+            style={{
+              fontFamily: "Georgia, serif",
+              fontSize: "1.7rem",
+              fontWeight: "400",
+              color: "#2b2825",
+              marginBottom: "10px",
+            }}
+          >
+            {label} Payment Successful
           </h2>
-          <p style={{ color: "#888", marginBottom: "20px" }}>
+          <p style={{ color: "#a39c8f", marginBottom: "28px" }}>
             Your order #{orderId} has been paid.
           </p>
         </>
@@ -66,10 +99,21 @@ const PaymentResultPage = ({ provider, result }) => {
 
       {status === "canceled" && (
         <>
-          <h2 style={{ color: "#e53935", marginBottom: "8px" }}>
-            {label} payment canceled
+          <p style={{ fontSize: "3rem", margin: "0 0 12px", color: "#c14f2f" }}>
+            ✕
+          </p>
+          <h2
+            style={{
+              fontFamily: "Georgia, serif",
+              fontSize: "1.7rem",
+              fontWeight: "400",
+              color: "#2b2825",
+              marginBottom: "10px",
+            }}
+          >
+            {label} Payment Canceled
           </h2>
-          <p style={{ color: "#888", marginBottom: "20px" }}>
+          <p style={{ color: "#a39c8f", marginBottom: "28px" }}>
             You canceled the payment process.
           </p>
         </>
@@ -77,30 +121,43 @@ const PaymentResultPage = ({ provider, result }) => {
 
       {status === "failed" && (
         <>
-          <h2 style={{ color: "#e53935", marginBottom: "8px" }}>
-            {label} payment failed
+          <p style={{ fontSize: "3rem", margin: "0 0 12px", color: "#c14f2f" }}>
+            ✕
+          </p>
+          <h2
+            style={{
+              fontFamily: "Georgia, serif",
+              fontSize: "1.7rem",
+              fontWeight: "400",
+              color: "#2b2825",
+              marginBottom: "10px",
+            }}
+          >
+            {label} Payment Failed
           </h2>
-          <p style={{ color: "#888", marginBottom: "20px" }}>
+          <p style={{ color: "#a39c8f", marginBottom: "28px" }}>
             {error || "Something went wrong while processing your payment."}
           </p>
         </>
       )}
 
-      <Link
-        to={orderId ? `/orders/${orderId}` : "/orders"}
-        style={{
-          display: "inline-block",
-          padding: "10px 24px",
-          backgroundColor: "#1976d2",
-          color: "#fff",
-          borderRadius: "6px",
-          textDecoration: "none",
-          fontWeight: "500",
-        }}
-      >
-        View Order
-      </Link>
-    </section>
+      {status !== "confirming" && (
+        <Link
+          to={orderId ? `/orders/${orderId}` : "/orders"}
+          style={{
+            padding: "13px 30px",
+            backgroundColor: "#2b2825",
+            color: "#faf7f2",
+            borderRadius: "30px",
+            textDecoration: "none",
+            fontWeight: "500",
+            fontSize: "0.88rem",
+          }}
+        >
+          View Order
+        </Link>
+      )}
+    </div>
   );
 };
 

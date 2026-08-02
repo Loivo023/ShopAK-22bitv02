@@ -1,14 +1,21 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
+import { formatUSD, formatVND } from "../utils/currency";
 
-const ProductCard = ({ id, name, price, category, imageUrl, description, isAdmin, onDelete }) => {
+const ProductCard = ({
+  id,
+  name,
+  price,
+  category,
+  imageUrl,
+  description,
+  isAdmin,
+  onDelete,
+}) => {
   const [hovered, setHovered] = useState(false);
   const [added, setAdded] = useState(false);
   const { addToCart } = useCart();
-
-  const truncated =
-    description?.length > 65 ? description.slice(0, 65) + "..." : description;
 
   const handleAddToCart = () => {
     addToCart({ id, name, price, imageUrl }, 1);
@@ -21,127 +28,189 @@ const ProductCard = ({ id, name, price, category, imageUrl, description, isAdmin
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        border: "1px solid #eee",
-        borderRadius: "10px",
-        padding: "14px",
-        width: "220px",
+        backgroundColor: "#fff",
+        borderRadius: "20px",
+        overflow: "hidden",
         display: "flex",
         flexDirection: "column",
-        gap: "8px",
-        position: "relative",
-        backgroundColor: "#fff",
-        transition: "transform 0.2s, box-shadow 0.2s",
-        transform: hovered ? "translateY(-4px)" : "none",
+        width: "100%",
+        border: "1px solid #ece6dc",
+        transition: "transform 0.25s ease, box-shadow 0.25s ease",
+        transform: hovered ? "translateY(-6px)" : "none",
         boxShadow: hovered
-          ? "0 8px 20px rgba(0,0,0,0.1)"
-          : "0 1px 4px rgba(0,0,0,0.06)",
+          ? "0 16px 32px rgba(43,40,37,0.08)"
+          : "0 2px 8px rgba(43,40,37,0.04)",
       }}
     >
-      {price > 100 && (
-        <span
-          style={{
-            position: "absolute",
-            top: "10px",
-            right: "10px",
-            backgroundColor: "#f59e0b",
-            color: "#fff",
-            fontSize: "0.68rem",
-            fontWeight: "bold",
-            padding: "2px 8px",
-            borderRadius: "20px",
-          }}
-        >
-          PREMIUM
-        </span>
-      )}
-
-      <img
-        src={imageUrl}
-        alt={name}
-        referrerPolicy="no-referrer"
-        onError={(e) => {
-          e.currentTarget.src = "https://placehold.co/300x200?text=No+Image";
-        }}
-        style={{ width: "100%", height: "200px", objectFit: "cover" }}
-      />
-
-      <h3 style={{ margin: 0, fontSize: "0.9rem", color: "#111", lineHeight: "1.3" }}>
-        {name}
-      </h3>
-
-      <span
+      <div
         style={{
-          alignSelf: "flex-start",
-          backgroundColor: "#f0f0f0",
-          color: "#666",
-          fontSize: "0.72rem",
-          padding: "2px 10px",
-          borderRadius: "20px",
+          position: "relative",
+          width: "100%",
+          height: "220px",
+          backgroundColor: "#f0e4d8",
+          overflow: "hidden",
         }}
       >
-        {category}
-      </span>
-
-      <p style={{ margin: 0, fontWeight: "bold", color: "#1976d2", fontSize: "1rem" }}>
-        ${price}
-      </p>
-      <p style={{ margin: 0, fontSize: "0.82rem", color: "#666", lineHeight: "1.4" }}>
-        {truncated}
-      </p>
-
-      <div style={{ display: "flex", gap: "6px" }}>
-        <Link
-          to={`/products/${id}`}
-          style={{
-            flex: 1,
-            padding: "8px 10px",
-            backgroundColor: "#1976d2",
-            color: "#fff",
-            borderRadius: "6px",
-            textAlign: "center",
-            textDecoration: "none",
-            fontSize: "0.82rem",
-            fontWeight: "500",
+        <img
+          src={imageUrl}
+          alt={name}
+          referrerPolicy="no-referrer"
+          onError={(e) => {
+            e.currentTarget.src =
+              "https://placehold.co/400x400/f0e4d8/8a8378?text=No+Image";
           }}
-        >
-          View Details
-        </Link>
-
-        <button
-          onClick={handleAddToCart}
           style={{
-            flex: 1,
-            padding: "8px 10px",
-            backgroundColor: added ? "#4caf50" : "#fff",
-            color: added ? "#fff" : "#1976d2",
-            border: "1px solid #1976d2",
-            borderRadius: "6px",
-            cursor: "pointer",
-            fontSize: "0.82rem",
-            fontWeight: "500",
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            transition: "transform 0.4s ease",
+            transform: hovered ? "scale(1.06)" : "scale(1)",
           }}
-        >
-          {added ? "✓ Added" : "Add to Cart"}
-        </button>
+        />
+        {price > 150 && (
+          <span
+            style={{
+              position: "absolute",
+              top: "12px",
+              left: "12px",
+              backgroundColor: "#2b2825",
+              color: "#faf7f2",
+              fontSize: "0.65rem",
+              fontWeight: "600",
+              letterSpacing: "0.5px",
+              padding: "4px 10px",
+              borderRadius: "20px",
+              textTransform: "uppercase",
+            }}
+          >
+            Premium
+          </span>
+        )}
       </div>
 
-      {isAdmin && (
-        <button
-          onClick={() => onDelete(id)}
+      <div
+        style={{
+          padding: "18px 20px 20px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "8px",
+          flex: 1,
+        }}
+      >
+        <span
           style={{
-            padding: "8px 12px",
-            backgroundColor: "#e53935",
-            color: "#fff",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer",
-            fontSize: "0.82rem",
-            fontWeight: "500",
+            fontSize: "0.7rem",
+            color: "#8a8378",
+            letterSpacing: "0.8px",
+            textTransform: "uppercase",
           }}
         >
-          Delete
-        </button>
-      )}
+          {category}
+        </span>
+
+        <h3
+          style={{
+            margin: 0,
+            fontSize: "1.02rem",
+            color: "#2b2825",
+            fontWeight: "500",
+            lineHeight: "1.35",
+          }}
+        >
+          {name}
+        </h3>
+
+        <p
+          style={{
+            margin: "2px 0 6px",
+            fontSize: "0.82rem",
+            color: "#a39c8f",
+            lineHeight: "1.5",
+            minHeight: "38px",
+          }}
+        >
+          {description?.length > 60
+            ? description.slice(0, 60) + "…"
+            : description}
+        </p>
+
+        <div
+          style={{
+            marginTop: "auto",
+            display: "flex",
+            flexDirection: "column",
+            gap: "1px",
+            marginBottom: "12px",
+          }}
+        >
+          <span
+            style={{ fontSize: "1.15rem", fontWeight: "600", color: "#c1662f" }}
+          >
+            {formatUSD(price)}
+          </span>
+          <span style={{ fontSize: "0.74rem", color: "#a39c8f" }}>
+            {formatVND(price)}
+          </span>
+        </div>
+
+        <div style={{ display: "flex", gap: "8px" }}>
+          <Link
+            to={`/products/${id}`}
+            style={{
+              flex: 1,
+              textAlign: "center",
+              padding: "10px 0",
+              border: "1px solid #2b2825",
+              borderRadius: "30px",
+              color: "#2b2825",
+              textDecoration: "none",
+              fontSize: "0.8rem",
+              fontWeight: "500",
+              letterSpacing: "0.3px",
+              transition: "all 0.2s ease",
+            }}
+          >
+            View
+          </Link>
+          <button
+            onClick={handleAddToCart}
+            style={{
+              flex: 1,
+              padding: "10px 0",
+              border: "none",
+              borderRadius: "30px",
+              backgroundColor: added ? "#5a7d5a" : "#2b2825",
+              color: "#faf7f2",
+              cursor: "pointer",
+              fontSize: "0.8rem",
+              fontWeight: "500",
+              letterSpacing: "0.3px",
+              transition: "background-color 0.2s ease",
+            }}
+          >
+            {added ? "Added ✓" : "Add to Bag"}
+          </button>
+        </div>
+
+        {isAdmin && (
+          <button
+            onClick={() => onDelete(id)}
+            style={{
+              marginTop: "6px",
+              padding: "8px 0",
+              backgroundColor: "transparent",
+              color: "#c14f2f",
+              border: "1px solid #f0d4cb",
+              borderRadius: "30px",
+              cursor: "pointer",
+              fontSize: "0.78rem",
+              fontWeight: "500",
+            }}
+          >
+            Delete
+          </button>
+        )}
+      </div>
     </div>
   );
 };
