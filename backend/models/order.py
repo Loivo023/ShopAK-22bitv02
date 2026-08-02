@@ -6,18 +6,24 @@ from database import Base
 class OrderDB(Base):
     __tablename__ = "orders"
 
-    id               = Column(Integer, primary_key=True, index=True)
-    user_id          = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
-    status           = Column(String(20), nullable=False, default="PLACED")
-    total_amount     = Column(Float, nullable=False)
-    shipping_address = Column(String(255), nullable=True)
-    carrier          = Column(String(50), nullable=True)
-    tracking_number  = Column(String(100), nullable=True)
-    shipped_at       = Column(DateTime(timezone=True), nullable=True)
-    created_at       = Column(DateTime(timezone=True), server_default=func.now())
+    id                = Column(Integer, primary_key=True, index=True)
+    user_id           = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    status            = Column(String(20), nullable=False, default="PLACED")
+    payment_status    = Column(String(20), nullable=False, default="PENDING")
+    total_amount      = Column(Float, nullable=False)
+    shipping_address  = Column(String(255), nullable=True)
+    shipping_provider = Column(String(20), nullable=False, default="IN_HOUSE")
+    tracking_code     = Column(String(100), nullable=True)
+    shipping_fee      = Column(Float, nullable=False, default=0)
+    shipper_id        = Column(Integer, ForeignKey("users.id"), nullable=True)
+    carrier            = Column(String(50), nullable=True)
+    tracking_number    = Column(String(100), nullable=True)
+    shipped_at          = Column(DateTime(timezone=True), nullable=True)
+    created_at          = Column(DateTime(timezone=True), server_default=func.now())
 
-    user  = relationship("UserDB", backref="orders")
-    items = relationship("OrderItemDB", back_populates="order", cascade="all, delete-orphan")
+    user    = relationship("UserDB", foreign_keys=[user_id], backref="orders")
+    shipper = relationship("UserDB", foreign_keys=[shipper_id])
+    items   = relationship("OrderItemDB", back_populates="order", cascade="all, delete-orphan")
 
 
 class OrderItemDB(Base):
