@@ -1,6 +1,7 @@
 import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 import mimetypes
@@ -19,6 +20,12 @@ from routers.auth import router as auth_router
 from routers.orders import router as orders_router
 from routers.payments import router as payments_router
 from routers.admin_stats import router as admin_stats_router
+from routers.shipping import router as shipping_router
+from routers.shipper import router as shipper_router
+from routers.fleet import router as fleet_router
+from routers.inventory import router as inventory_router
+from routers.shipper_reports import router as shipper_reports_router
+
 
 Base.metadata.create_all(bind=engine)
 
@@ -54,6 +61,11 @@ app.include_router(auth_router)
 app.include_router(orders_router)
 app.include_router(payments_router)
 app.include_router(admin_stats_router)
+app.include_router(shipping_router)
+app.include_router(shipper_router)
+app.include_router(fleet_router)
+app.include_router(inventory_router)
+app.include_router(shipper_reports_router)
 
 
 @app.get("/")

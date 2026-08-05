@@ -2,6 +2,12 @@ import { useEffect, useState } from "react";
 import { usersApi } from "../api/usersApi";
 import { useAuth } from "../auth/useAuth";
 
+const ROLE_META = {
+  ADMIN: { label: "Admin", color: "#7c3aed", bg: "#f3e8ff" },
+  SHIPPER: { label: "Shipper", color: "#059669", bg: "#d1fae5" },
+  CUSTOMER: { label: "Customer", color: "#475569", bg: "#f1f5f9" },
+};
+
 const AdminUsersPage = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -26,8 +32,7 @@ const AdminUsersPage = () => {
     fetchUsers();
   }, []);
 
-  const handleToggleRole = async (u) => {
-    const newRole = u.role === "ADMIN" ? "CUSTOMER" : "ADMIN";
+  const handleSetRole = async (u, newRole) => {
     setUpdatingId(u.id);
     try {
       const updated = await usersApi.updateRole(u.id, newRole);
@@ -69,118 +74,148 @@ const AdminUsersPage = () => {
           overflow: "hidden",
         }}
       >
-        {users.map((u, idx) => (
-          <div
-            key={u.id}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "14px 20px",
-              borderBottom:
-                idx === users.length - 1 ? "none" : "1px solid #f0f1f5",
-            }}
-          >
+        {users.map((u, idx) => {
+          const meta = ROLE_META[u.role] || ROLE_META.CUSTOMER;
+          const isSelf = u.id === currentUser?.id;
+          return (
             <div
+              key={u.id}
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: "12px",
-                flex: 1,
-                minWidth: 0,
+                justifyContent: "space-between",
+                padding: "14px 20px",
+                borderBottom:
+                  idx === users.length - 1 ? "none" : "1px solid #f0f1f5",
+                flexWrap: "wrap",
+                gap: "10px",
               }}
             >
               <div
                 style={{
-                  width: "36px",
-                  height: "36px",
-                  borderRadius: "50%",
-                  background: "linear-gradient(135deg, #7c6cff, #4f46e5)",
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "center",
-                  color: "#fff",
-                  fontWeight: "700",
-                  fontSize: "0.8rem",
-                  flexShrink: 0,
+                  gap: "12px",
+                  flex: 1,
+                  minWidth: "200px",
                 }}
               >
-                {(u.full_name || u.email)[0].toUpperCase()}
-              </div>
-              <div style={{ minWidth: 0 }}>
-                <p
+                <div
                   style={{
-                    margin: 0,
-                    fontWeight: "600",
-                    color: "#14162b",
-                    fontSize: "0.9rem",
-                  }}
-                >
-                  {u.full_name}
-                </p>
-                <p
-                  style={{
-                    margin: 0,
-                    color: "#a0a3b5",
+                    width: "36px",
+                    height: "36px",
+                    borderRadius: "50%",
+                    background: "linear-gradient(135deg, #7c6cff, #4f46e5)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#fff",
+                    fontWeight: "700",
                     fontSize: "0.8rem",
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
+                    flexShrink: 0,
                   }}
                 >
-                  {u.email}
-                </p>
+                  {(u.full_name || u.email)[0].toUpperCase()}
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <p
+                    style={{
+                      margin: 0,
+                      fontWeight: "600",
+                      color: "#14162b",
+                      fontSize: "0.9rem",
+                    }}
+                  >
+                    {u.full_name}
+                  </p>
+                  <p
+                    style={{
+                      margin: 0,
+                      color: "#a0a3b5",
+                      fontSize: "0.8rem",
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
+                    {u.email}
+                  </p>
+                </div>
+              </div>
+
+              <span
+                style={{
+                  padding: "4px 12px",
+                  borderRadius: "20px",
+                  fontSize: "0.76rem",
+                  fontWeight: "700",
+                  color: meta.color,
+                  backgroundColor: meta.bg,
+                }}
+              >
+                {meta.label}
+              </span>
+
+              <div style={{ display: "flex", gap: "6px" }}>
+                {u.role !== "ADMIN" && (
+                  <button
+                    onClick={() => handleSetRole(u, "ADMIN")}
+                    disabled={isSelf || updatingId === u.id}
+                    style={btnStyle(
+                      "#4f46e5",
+                      "#fff",
+                      isSelf || updatingId === u.id,
+                    )}
+                  >
+                    Make Admin
+                  </button>
+                )}
+                {u.role !== "SHIPPER" && (
+                  <button
+                    onClick={() => handleSetRole(u, "SHIPPER")}
+                    disabled={isSelf || updatingId === u.id}
+                    style={btnStyle(
+                      "#059669",
+                      "#fff",
+                      isSelf || updatingId === u.id,
+                    )}
+                  >
+                    Make Shipper
+                  </button>
+                )}
+                {u.role !== "CUSTOMER" && (
+                  <button
+                    onClick={() => handleSetRole(u, "CUSTOMER")}
+                    disabled={isSelf || updatingId === u.id}
+                    style={btnStyle(
+                      "#fff",
+                      "#666",
+                      isSelf || updatingId === u.id,
+                      "1px solid #e4e6ee",
+                    )}
+                  >
+                    Set Customer
+                  </button>
+                )}
               </div>
             </div>
-
-            <span
-              style={{
-                padding: "4px 12px",
-                borderRadius: "20px",
-                fontSize: "0.76rem",
-                fontWeight: "700",
-                color: u.role === "ADMIN" ? "#7c3aed" : "#475569",
-                backgroundColor: u.role === "ADMIN" ? "#f3e8ff" : "#f1f5f9",
-                marginRight: "16px",
-              }}
-            >
-              {u.role}
-            </span>
-
-            <button
-              onClick={() => handleToggleRole(u)}
-              disabled={u.id === currentUser?.id || updatingId === u.id}
-              title={
-                u.id === currentUser?.id ? "You can't change your own role" : ""
-              }
-              style={{
-                padding: "7px 14px",
-                borderRadius: "8px",
-                fontSize: "0.8rem",
-                fontWeight: "600",
-                border:
-                  "1px solid " + (u.role === "ADMIN" ? "#e4e6ee" : "#4f46e5"),
-                backgroundColor: u.role === "ADMIN" ? "#fff" : "#4f46e5",
-                color: u.role === "ADMIN" ? "#666" : "#fff",
-                cursor:
-                  u.id === currentUser?.id || updatingId === u.id
-                    ? "not-allowed"
-                    : "pointer",
-                opacity:
-                  u.id === currentUser?.id || updatingId === u.id ? 0.5 : 1,
-              }}
-            >
-              {updatingId === u.id
-                ? "..."
-                : u.role === "ADMIN"
-                  ? "Demote to Customer"
-                  : "Promote to Admin"}
-            </button>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
 };
+
+const btnStyle = (bg, color, disabled, border = "none") => ({
+  padding: "7px 12px",
+  borderRadius: "8px",
+  fontSize: "0.76rem",
+  fontWeight: "600",
+  border,
+  backgroundColor: bg,
+  color,
+  cursor: disabled ? "not-allowed" : "pointer",
+  opacity: disabled ? 0.5 : 1,
+});
 
 export default AdminUsersPage;

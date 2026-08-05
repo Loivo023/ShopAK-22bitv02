@@ -2,7 +2,18 @@ import axiosClient from "./axiosClient";
 import { handleApiError } from "./errorHandler";
 
 export const ordersApi = {
-  async checkout(cartItems, shippingAddress) {
+  async checkout(
+    cartItems,
+    {
+      shippingAddress,
+      shippingProvider = "IN_HOUSE",
+      shippingFee = 0,
+      toName,
+      toPhone,
+      toDistrictId,
+      toWardCode,
+    },
+  ) {
     try {
       const payload = {
         items: cartItems.map((item) => ({
@@ -11,7 +22,13 @@ export const ordersApi = {
           price: item.price,
           quantity: item.quantity,
         })),
-        shipping_address: shippingAddress || null,
+        shipping_address: shippingAddress,
+        shipping_provider: shippingProvider,
+        shipping_fee: shippingFee,
+        to_name: toName,
+        to_phone: toPhone,
+        to_district_id: toDistrictId,
+        to_ward_code: toWardCode,
       };
       const response = await axiosClient.post("/orders/checkout", payload);
       return response.data;

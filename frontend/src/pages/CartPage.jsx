@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { ordersApi } from "../api/ordersApi";
 import { formatUSD, formatVND } from "../utils/currency";
+import { shippingApi } from "../api/shippingApi";
 
 const CartPage = () => {
   const {
@@ -17,6 +18,44 @@ const CartPage = () => {
   const [placingOrder, setPlacingOrder] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  // Thêm state mới ở đầu component
+  const [shippingProvider, setShippingProvider] = useState("IN_HOUSE");
+  const [toDistrictId, setToDistrictId] = useState("");
+  const [toWardCode, setToWardCode] = useState("");
+  const [shippingFee, setShippingFee] = useState(15000);
+  const [calculatingFee, setCalculatingFee] = useState(false);
+  const [recipientName, setRecipientName] = useState("");
+  const [recipientPhone, setRecipientPhone] = useState("");
+
+  const ghnInputStyle = {
+    padding: "10px 14px",
+    borderRadius: "12px",
+    border: "1px solid #ece6dc",
+    fontSize: "0.85rem",
+    boxSizing: "border-box",
+  };
+
+  // Thêm hàm tính phí GHN
+  const handleCalculateGhnFee = async () => {
+    if (!toDistrictId || !toWardCode) {
+      setError("Please enter district ID and ward code for GHN.");
+      return;
+    }
+    setCalculatingFee(true);
+    setError("");
+    try {
+      const { fee } = await shippingApi.calculateFee({
+        shippingProvider: "GHN",
+        toDistrictId: Number(toDistrictId),
+        toWardCode,
+      });
+      setShippingFee(fee);
+    } catch (err) {
+      setError("Failed to calculate GHN fee. Check district/ward code.");
+    } finally {
+      setCalculatingFee(false);
+    }
+  };
 
   const handleCheckout = async () => {
     if (items.length === 0) return;
@@ -24,10 +63,20 @@ const CartPage = () => {
       setError("Please enter a shipping address.");
       return;
     }
+
     setPlacingOrder(true);
     setError("");
     try {
-      const order = await ordersApi.checkout(items, shippingAddress.trim());
+      const order = await ordersApi.checkout(items, {
+        shippingAddress: shippingAddress.trim(),
+        shippingProvider,
+        shippingFee: shippingProvider === "IN_HOUSE" ? 15000 : shippingFee,
+        toName: shippingProvider === "GHN" ? recipientName : undefined,
+        toPhone: shippingProvider === "GHN" ? recipientPhone : undefined,
+        toDistrictId:
+          shippingProvider === "GHN" ? Number(toDistrictId) : undefined,
+        toWardCode: shippingProvider === "GHN" ? toWardCode : undefined,
+      });
       clearCart();
       navigate(`/orders/${order.id}`);
     } catch (err) {
@@ -220,6 +269,121 @@ const CartPage = () => {
             </button>
           </div>
         ))}
+      </div>
+
+      <div style={{ marginTop: "24px", marginBottom: "16px" }}>
+        <label
+          style={{
+            display: "block",
+            marginBottom: "10px",
+            fontSize: "0.85rem",
+            color: "#2b2825",
+            fontWeight: "500",
+          }}
+        >
+          Delivery Method
+        </label>
+        <div style={{ display: "flex", gap: "10px" }}>
+          <label
+            style={{
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "12px 16px",
+              borderRadius: "14px",
+              cursor: "pointer",
+              border:
+                shippingProvider === "IN_HOUSE"
+                  ? "2px solid #2b2825"
+                  : "1px solid #ece6dc",
+            }}
+          >
+            <input
+              type="radio"
+              checked={shippingProvider === "IN_HOUSE"}
+              onChange={() => setShippingProvider("IN_HOUSE")}
+            />
+            <span style={{ fontSize: "0.85rem" }}>
+              In-house Delivery (15,000₫)
+            </span>
+          </label>
+          <label
+            style={{
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "12px 16px",
+              borderRadius: "14px",
+              cursor: "pointer",
+              border:
+                shippingProvider === "GHN"
+                  ? "2px solid #2b2825"
+                  : "1px solid #ece6dc",
+            }}
+          >
+            <input
+              type="radio"
+              checked={shippingProvider === "GHN"}
+              onChange={() => setShippingProvider("GHN")}
+            />
+            <span style={{ fontSize: "0.85rem" }}>Fast delievery (GHN)</span>
+          </label>
+        </div>
+
+        {shippingProvider === "GHN" && (
+          <div
+            style={{
+              marginTop: "12px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "8px",
+            }}
+          >
+            <input
+              placeholder="Recipient name"
+              value={recipientName}
+              onChange={(e) => setRecipientName(e.target.value)}
+              style={ghnInputStyle}
+            />
+            <input
+              placeholder="Recipient phone"
+              value={recipientPhone}
+              onChange={(e) => setRecipientPhone(e.target.value)}
+              style={ghnInputStyle}
+            />
+            <input
+              placeholder="District ID (from GHN)"
+              value={toDistrictId}
+              onChange={(e) => setToDistrictId(e.target.value)}
+              style={ghnInputStyle}
+            />
+            <input
+              placeholder="Ward code (from GHN)"
+              value={toWardCode}
+              onChange={(e) => setToWardCode(e.target.value)}
+              style={ghnInputStyle}
+            />
+            <button
+              onClick={handleCalculateGhnFee}
+              disabled={calculatingFee}
+              style={{
+                padding: "10px",
+                borderRadius: "12px",
+                border: "1px solid #2b2825",
+                backgroundColor: "#fff",
+                color: "#2b2825",
+                cursor: "pointer",
+                fontSize: "0.82rem",
+              }}
+            >
+              {calculatingFee
+                ? "Calculating..."
+                : `Calculate Fee${shippingFee ? ` — ${shippingFee.toLocaleString()}₫` : ""}`}
+            </button>
+          </div>
+        )}
       </div>
 
       <div style={{ marginTop: "28px" }}>

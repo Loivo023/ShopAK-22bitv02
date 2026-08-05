@@ -98,12 +98,53 @@ const Header = ({ title }) => {
         ))}
 
         {role === "ADMIN" && (
+          <>
+            <NavLink
+              to="/admin/dashboard"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "6px 16px",
+                borderRadius: "20px",
+                background: "linear-gradient(135deg, #6d5ef6, #4f46e5)",
+                color: "#fff",
+                textDecoration: "none",
+                fontSize: "0.9rem",
+                fontWeight: "600",
+                marginLeft: "4px",
+              }}
+            >
+              ⚙ Admin Panel
+            </NavLink>
+            <NavLink
+              to="/shipper"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "6px 16px",
+                borderRadius: "20px",
+                background: "linear-gradient(135deg, #34d399, #059669)",
+                color: "#fff",
+                textDecoration: "none",
+                fontSize: "0.9rem",
+                fontWeight: "600",
+                marginLeft: "4px",
+              }}
+            >
+              🚚 Ship Panel
+            </NavLink>
+          </>
+        )}
+
+        {role === "SHIPPER" && (
           <NavLink
-            to="/admin/dashboard"
+            to="/shipper"
             style={{
               padding: "8px 18px",
               borderRadius: "30px",
-              backgroundColor: "#c1662f",
+              backgroundColor: "#34d399",
               color: "#fff",
               textDecoration: "none",
               fontSize: "0.86rem",
@@ -111,10 +152,9 @@ const Header = ({ title }) => {
               marginLeft: "4px",
             }}
           >
-            Admin
+            Deliveries
           </NavLink>
         )}
-
         {isAuthenticated && (
           <>
             <span

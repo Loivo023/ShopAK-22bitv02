@@ -26,6 +26,16 @@ import NotFound from "./pages/NotFound";
 import AdminRoute from "./routes/AdminRoute";
 import PrivateRoute from "./routes/PrivateRoute";
 import AdminLayout from "./layouts/AdminLayout";
+import ShipperLayout from "./layouts/ShipperLayout";
+import ShipmentsPage from "./pages/shipper/ShipmentsPage";
+import FleetPage from "./pages/shipper/FleetPage";
+import InventoryPage from "./pages/shipper/InventoryPage";
+import ReportsPage from "./pages/shipper/ReportsPage";
+import BillingPage from "./pages/shipper/BillingPage";
+import AdminShippersPage from "./pages/AdminShippersPage";
+import ShipperRoute from "./routes/ShipperRoute";
+import OrdersPageShipper from "./pages/shipper/OrdersPage";
+import DriversPage from "./pages/shipper/DriversPage";
 
 const StoreLayout = ({ children }) => (
   <div
@@ -61,6 +71,22 @@ const App = () => {
           <Route path="/admin/orders" element={<AdminOrdersPage />} />
           <Route path="/admin/orders/:id" element={<OrderDetailPage />} />
           <Route path="/admin/users" element={<AdminUsersPage />} />
+          <Route path="/admin/shippers" element={<AdminShippersPage />} />
+          <Route path="/admin/shipments" element={<ShipmentsPage />} />
+          <Route path="/admin/fleet" element={<FleetPage />} />
+        </Route>
+      </Route>
+
+      <Route element={<ShipperRoute />}>
+        <Route element={<ShipperLayout />}>
+          <Route path="/shipper" element={<ShipmentsPage />} />
+          <Route path="/shipper/shipments" element={<ShipmentsPage />} />
+          <Route path="/shipper/fleet" element={<FleetPage />} />
+          <Route path="/shipper/inventory" element={<InventoryPage />} />
+          <Route path="/shipper/reports" element={<ReportsPage />} />
+          <Route path="/shipper/billing" element={<BillingPage />} />
+          <Route path="/shipper/orders" element={<OrdersPageShipper />} />
+          <Route path="/shipper/drivers" element={<DriversPage />} />
         </Route>
       </Route>
 

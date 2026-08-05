@@ -24,6 +24,6 @@ class UserRoleUpdate(BaseModel):
     @field_validator("role")
     @classmethod
     def validate_role(cls, v: str) -> str:
-        if v not in ["ADMIN", "CUSTOMER"]:
-            raise ValueError("Role must be ADMIN or CUSTOMER")
+        if v not in ["ADMIN", "CUSTOMER", "SHIPPER"]:
+            raise ValueError("Role must be ADMIN, CUSTOMER, or SHIPPER")
         return v

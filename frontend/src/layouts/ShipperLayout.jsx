@@ -20,10 +20,15 @@ const Icon = ({ path, size = 20 }) => (
 
 const ICONS = {
   grid: "M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z",
-  box: "M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16zM3.27 6.96 12 12.01l8.73-5.05M12 22.08V12",
+  truck:
+    "M1 3h15v13H1zM16 8h4l3 3v5h-7V8zM5.5 21a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM18.5 21a2.5 2.5 0 100-5 2.5 2.5 0 000 5z",
   receipt: "M4 2h16v20l-3-2-3 2-3-2-3 2-3-2-1 2V2z M8 7h8 M8 11h8 M8 15h5",
+  fleet: "M3 3h18v18H3zM3 9h18M9 21V9",
   users:
     "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M23 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75",
+  box: "M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16zM3.27 6.96 12 12.01l8.73-5.05M12 22.08V12",
+  chart: "M18 20V10M12 20V4M6 20v-6",
+  dollar: "M12 1v22 M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6",
   store: "M3 9l1-6h16l1 6M4 9v11h16V9M4 9h16M9 21v-6h6v6",
   logout: "M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9",
   menu: "M3 12h18M3 6h18M3 18h18",
@@ -31,14 +36,18 @@ const ICONS = {
 };
 
 const NAV_ITEMS = [
-  { label: "Dashboard", to: "/admin/dashboard", icon: ICONS.grid },
-  { label: "Products", to: "/admin/products", icon: ICONS.box },
-  { label: "Orders", to: "/admin/orders", icon: ICONS.receipt },
-  { label: "Users", to: "/admin/users", icon: ICONS.users },
+  { label: "Dashboard", to: "/shipper", icon: ICONS.grid },
+  { label: "Shipments", to: "/shipper/shipments", icon: ICONS.truck },
+  { label: "Orders", to: "/shipper/orders", icon: ICONS.receipt },
+  { label: "Fleet", to: "/shipper/fleet", icon: ICONS.fleet },
+  { label: "Drivers", to: "/shipper/drivers", icon: ICONS.users },
+  { label: "Inventory", to: "/shipper/inventory", icon: ICONS.box },
+  { label: "Reports", to: "/shipper/reports", icon: ICONS.chart },
+  { label: "Billing", to: "/shipper/billing", icon: ICONS.dollar },
 ];
 
-const AdminLayout = () => {
-  const { user } = useAuth();
+const ShipperLayout = () => {
+  const { user, role } = useAuth();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -47,7 +56,7 @@ const AdminLayout = () => {
     navigate("/login");
   };
 
-  const initials = (user?.full_name || user?.email || "A")
+  const initials = (user?.full_name || user?.email || "S")
     .split(" ")
     .map((w) => w[0])
     .join("")
@@ -58,25 +67,13 @@ const AdminLayout = () => {
     <div style={{ display: "flex", minHeight: "100vh", background: "#f5f6fb" }}>
       <style>{`
         @media (max-width: 860px) {
-          .admin-sidebar {
-            position: fixed !important;
-            transform: translateX(-100%);
-            transition: transform 0.25s ease;
-            z-index: 200;
-          }
-          .admin-sidebar.open {
-            transform: translateX(0);
-          }
-          .admin-content {
-            margin-left: 0 !important;
-          }
-          .admin-mobile-toggle {
-            display: flex !important;
-          }
+          .shipper-sidebar { position: fixed !important; transform: translateX(-100%); transition: transform 0.25s ease; z-index: 200; }
+          .shipper-sidebar.open { transform: translateX(0); }
+          .shipper-content { margin-left: 0 !important; }
+          .shipper-mobile-toggle { display: flex !important; }
         }
       `}</style>
 
-      {/* Overlay for mobile */}
       {mobileOpen && (
         <div
           onClick={() => setMobileOpen(false)}
@@ -89,9 +86,8 @@ const AdminLayout = () => {
         />
       )}
 
-      {/* Sidebar */}
       <aside
-        className={`admin-sidebar${mobileOpen ? " open" : ""}`}
+        className={`shipper-sidebar${mobileOpen ? " open" : ""}`}
         style={{
           width: "252px",
           flexShrink: 0,
@@ -120,7 +116,7 @@ const AdminLayout = () => {
                 width: "34px",
                 height: "34px",
                 borderRadius: "10px",
-                background: "linear-gradient(135deg, #7c6cff, #4f46e5)",
+                background: "linear-gradient(135deg, #34d399, #059669)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -131,14 +127,8 @@ const AdminLayout = () => {
             >
               S
             </div>
-            <span
-              style={{
-                fontWeight: "700",
-                fontSize: "1.05rem",
-                letterSpacing: "0.2px",
-              }}
-            >
-              ShopAK <span style={{ color: "#7c6cff" }}>Admin</span>
+            <span style={{ fontWeight: "700", fontSize: "1.05rem" }}>
+              ShopAK <span style={{ color: "#34d399" }}>Shipments</span>
             </span>
           </div>
           <button
@@ -148,7 +138,6 @@ const AdminLayout = () => {
               border: "none",
               color: "#9295b0",
               cursor: "pointer",
-              padding: "4px",
             }}
           >
             <Icon path={ICONS.close} />
@@ -161,6 +150,7 @@ const AdminLayout = () => {
             flexDirection: "column",
             gap: "4px",
             flex: 1,
+            overflowY: "auto",
           }}
         >
           <p
@@ -180,6 +170,7 @@ const AdminLayout = () => {
             <NavLink
               key={item.to}
               to={item.to}
+              end={item.to === "/shipper"}
               onClick={() => setMobileOpen(false)}
               style={({ isActive }) => ({
                 display: "flex",
@@ -192,39 +183,17 @@ const AdminLayout = () => {
                 fontWeight: isActive ? "600" : "500",
                 color: isActive ? "#fff" : "#9295b0",
                 background: isActive
-                  ? "linear-gradient(135deg, rgba(124,108,255,0.25), rgba(79,70,229,0.25))"
+                  ? "linear-gradient(135deg, rgba(52,211,153,0.25), rgba(5,150,105,0.25))"
                   : "transparent",
                 boxShadow: isActive
-                  ? "inset 0 0 0 1px rgba(124,108,255,0.35)"
+                  ? "inset 0 0 0 1px rgba(52,211,153,0.35)"
                   : "none",
-                transition: "all 0.15s ease",
               })}
             >
               <Icon path={item.icon} size={18} />
               {item.label}
             </NavLink>
           ))}
-
-          <NavLink
-            to="/shipper"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "12px",
-              padding: "11px 14px",
-              borderRadius: "10px",
-              textDecoration: "none",
-              fontSize: "0.9rem",
-              fontWeight: "500",
-              color: "#34d399",
-            }}
-          >
-            <Icon
-              path={ICONS.truck || "M1 3h15v13H1zM16 8h4l3 3v5h-7V8z"}
-              size={18}
-            />
-            Shipper Dashboard
-          </NavLink>
 
           <div
             style={{
@@ -251,9 +220,27 @@ const AdminLayout = () => {
             <Icon path={ICONS.store} size={18} />
             View Store
           </NavLink>
+          {role === "ADMIN" && (
+            <NavLink
+              to="/admin/dashboard"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                padding: "11px 14px",
+                borderRadius: "10px",
+                textDecoration: "none",
+                fontSize: "0.9rem",
+                fontWeight: "500",
+                color: "#7c6cff",
+              }}
+            >
+              <Icon path={ICONS.grid} size={18} />
+              Back to Admin
+            </NavLink>
+          )}
         </nav>
 
-        {/* User footer */}
         <div
           style={{
             display: "flex",
@@ -270,7 +257,7 @@ const AdminLayout = () => {
               width: "36px",
               height: "36px",
               borderRadius: "50%",
-              background: "linear-gradient(135deg, #7c6cff, #4f46e5)",
+              background: "linear-gradient(135deg, #34d399, #059669)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -294,7 +281,7 @@ const AdminLayout = () => {
                 textOverflow: "ellipsis",
               }}
             >
-              {user?.full_name || "Admin"}
+              {user?.full_name || "Shipper"}
             </p>
             <p
               style={{
@@ -311,14 +298,12 @@ const AdminLayout = () => {
           </div>
           <button
             onClick={handleLogout}
-            title="Logout"
             style={{
               background: "none",
               border: "none",
               color: "#9295b0",
               cursor: "pointer",
               padding: "6px",
-              display: "flex",
             }}
           >
             <Icon path={ICONS.logout} size={17} />
@@ -326,11 +311,9 @@ const AdminLayout = () => {
         </div>
       </aside>
 
-      {/* Main content */}
-      <div className="admin-content" style={{ flex: 1, minWidth: 0 }}>
-        {/* Mobile top bar */}
+      <div className="shipper-content" style={{ flex: 1, minWidth: 0 }}>
         <div
-          className="admin-mobile-toggle"
+          className="shipper-mobile-toggle"
           style={{
             display: "none",
             alignItems: "center",
@@ -355,14 +338,13 @@ const AdminLayout = () => {
             <Icon path={ICONS.menu} />
           </button>
           <span style={{ fontWeight: "700", color: "#101828" }}>
-            ShopAK Admin
+            ShopAK Ship
           </span>
         </div>
-
         <Outlet />
       </div>
     </div>
   );
 };
 
-export default AdminLayout;
+export default ShipperLayout;

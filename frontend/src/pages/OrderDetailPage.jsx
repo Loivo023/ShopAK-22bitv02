@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { ordersApi } from "../api/ordersApi";
 import { useAuth } from "../auth/useAuth";
 import { formatUSD, formatVND } from "../utils/currency";
+import RouteProgress from "../Components/RouteProgress";
 
 const STATUS_META = {
   PLACED: { color: "#8a8378", bg: "#f0e4d8", label: "Placed" },
@@ -156,6 +157,7 @@ const OrderDetailPage = () => {
   const itemsEditable =
     isAdmin && EDITABLE_ITEM_STATUSES.includes(order.status);
   const nextOptions = NEXT_STATUS_OPTIONS[order.status] || [];
+  <RouteProgress status={order.status} />;
 
   return (
     <div style={{ backgroundColor: "#faf7f2", minHeight: "100vh" }}>
@@ -241,6 +243,24 @@ const OrderDetailPage = () => {
             🔒 This order is {order.status.toLowerCase()} and can no longer be
             modified.
           </div>
+        )}
+
+        {order.shipping_provider === "GHN" && order.tracking_code ? (
+          <p style={{ fontSize: "0.86rem", color: "#5c574d" }}>
+            Mã vận đơn GHN:{" "}
+            <a
+              href={`https://tracking.ghn.vn/?b=${order.tracking_code}`}
+              target="_blank"
+              rel="noreferrer"
+              style={{ color: "#c1662f" }}
+            >
+              {order.tracking_code}
+            </a>
+          </p>
+        ) : (
+          <p style={{ fontSize: "0.86rem", color: "#5c574d" }}>
+            Đơn vị vận chuyển: Đội xe ShopAK
+          </p>
         )}
 
         {order.tracking_number && (

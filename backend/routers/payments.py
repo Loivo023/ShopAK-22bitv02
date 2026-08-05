@@ -248,10 +248,12 @@ def confirm_payment(
     if order.user_id != user.id and user.role != "ADMIN":
         raise HTTPException(status_code=403, detail="Not allowed")
 
-    if order.status == "PAID":
+    if order.payment_status == "PAID":
         return {"message": "Order already paid", "order_id": order.id, "status": order.status}
 
-    order.status = "PAID"
+    order.payment_status = "PAID"
+    if order.status == "PLACED":
+        order.status = "PROCESSING"
 
     payment = (
         db.query(PaymentDB)
