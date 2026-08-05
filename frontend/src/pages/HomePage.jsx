@@ -126,7 +126,7 @@ const HomePage = () => {
           }}
         >
           <img
-            src="https://picsum.photos/seed/heroshop2026/800/900"
+            src="https://haloshop.vn/wp-content/uploads/2025/07/MAY-PS4-SLIM-500GB-DRAGON-QUEST-LIMITED-EDITION_00.webp"
             alt="Featured collection"
             referrerPolicy="no-referrer"
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
