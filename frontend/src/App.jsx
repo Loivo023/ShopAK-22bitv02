@@ -36,6 +36,7 @@ import AdminShippersPage from "./pages/AdminShippersPage";
 import ShipperRoute from "./routes/ShipperRoute";
 import OrdersPageShipper from "./pages/shipper/OrdersPage";
 import DriversPage from "./pages/shipper/DriversPage";
+import AdminAnalyticsPage from "./pages/AdminAnalyticsPage";
 
 const StoreLayout = ({ children }) => (
   <div
@@ -74,6 +75,7 @@ const App = () => {
           <Route path="/admin/shippers" element={<AdminShippersPage />} />
           <Route path="/admin/shipments" element={<ShipmentsPage />} />
           <Route path="/admin/fleet" element={<FleetPage />} />
+          <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
         </Route>
       </Route>
 

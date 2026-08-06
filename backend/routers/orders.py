@@ -74,7 +74,7 @@ def checkout_order(
             user_id=user.id,
             status="PLACED",
             payment_status="PENDING",
-            total_amount=items_total + payload.shipping_fee,
+            total_amount=items_total + (payload.shipping_fee / 25400),
             shipping_address=payload.shipping_address,
             shipping_provider=payload.shipping_provider,
             shipping_fee=payload.shipping_fee,

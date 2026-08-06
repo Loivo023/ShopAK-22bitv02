@@ -1,9 +1,20 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { ordersApi } from "../api/ordersApi";
-import { formatUSD, formatVND } from "../utils/currency";
 import { shippingApi } from "../api/shippingApi";
+import { ghnApi } from "../api/ghnApi";
+import { formatUSD, formatVND } from "../utils/currency";
+
+const inputStyle = {
+  padding: "10px 14px",
+  borderRadius: "12px",
+  border: "1px solid #ece6dc",
+  fontSize: "0.85rem",
+  boxSizing: "border-box",
+  backgroundColor: "#fff",
+  color: "#2b2825",
+};
 
 const CartPage = () => {
   const {
@@ -14,31 +25,71 @@ const CartPage = () => {
     totalPrice,
     clearCart,
   } = useCart();
-  const [shippingAddress, setShippingAddress] = useState("");
-  const [placingOrder, setPlacingOrder] = useState(false);
-  const [error, setError] = useState("");
   const navigate = useNavigate();
-  // Thêm state mới ở đầu component
+
+  const [shippingAddress, setShippingAddress] = useState("");
   const [shippingProvider, setShippingProvider] = useState("IN_HOUSE");
-  const [toDistrictId, setToDistrictId] = useState("");
-  const [toWardCode, setToWardCode] = useState("");
-  const [shippingFee, setShippingFee] = useState(15000);
-  const [calculatingFee, setCalculatingFee] = useState(false);
+  const [error, setError] = useState("");
+  const [placingOrder, setPlacingOrder] = useState(false);
+
+  // GHN specifics
   const [recipientName, setRecipientName] = useState("");
   const [recipientPhone, setRecipientPhone] = useState("");
+  const [provinces, setProvinces] = useState([]);
+  const [districts, setDistricts] = useState([]);
+  const [wards, setWards] = useState([]);
+  const [provinceId, setProvinceId] = useState("");
+  const [districtId, setDistrictId] = useState("");
+  const [wardCode, setWardCode] = useState("");
+  const [shippingFee, setShippingFee] = useState(0);
+  const [calculatingFee, setCalculatingFee] = useState(false);
+  const [loadingProvinces, setLoadingProvinces] = useState(false);
 
-  const ghnInputStyle = {
-    padding: "10px 14px",
-    borderRadius: "12px",
-    border: "1px solid #ece6dc",
-    fontSize: "0.85rem",
-    boxSizing: "border-box",
-  };
+  useEffect(() => {
+    if (shippingProvider !== "GHN" || provinces.length > 0) return;
+    setLoadingProvinces(true);
+    ghnApi
+      .getProvinces()
+      .then(setProvinces)
+      .catch(() =>
+        setError("Failed to load GHN provinces. Check API configuration."),
+      )
+      .finally(() => setLoadingProvinces(false));
+  }, [shippingProvider]);
 
-  // Thêm hàm tính phí GHN
-  const handleCalculateGhnFee = async () => {
-    if (!toDistrictId || !toWardCode) {
-      setError("Please enter district ID and ward code for GHN.");
+  useEffect(() => {
+    if (!provinceId) {
+      setDistricts([]);
+      setDistrictId("");
+      return;
+    }
+    ghnApi
+      .getDistricts(Number(provinceId))
+      .then(setDistricts)
+      .catch(() => setDistricts([]));
+    setDistrictId("");
+    setWardCode("");
+    setWards([]);
+  }, [provinceId]);
+
+  useEffect(() => {
+    if (!districtId) {
+      setWards([]);
+      setWardCode("");
+      return;
+    }
+    ghnApi
+      .getWards(Number(districtId))
+      .then(setWards)
+      .catch(() => setWards([]));
+    setWardCode("");
+  }, [districtId]);
+
+  const effectiveFee = shippingProvider === "IN_HOUSE" ? 15000 : shippingFee;
+
+  const handleCalculateFee = async () => {
+    if (!districtId || !wardCode) {
+      setError("Please select district and ward.");
       return;
     }
     setCalculatingFee(true);
@@ -46,12 +97,12 @@ const CartPage = () => {
     try {
       const { fee } = await shippingApi.calculateFee({
         shippingProvider: "GHN",
-        toDistrictId: Number(toDistrictId),
-        toWardCode,
+        toDistrictId: Number(districtId),
+        toWardCode: wardCode,
       });
       setShippingFee(fee);
     } catch (err) {
-      setError("Failed to calculate GHN fee. Check district/ward code.");
+      setError("Failed to calculate GHN fee.");
     } finally {
       setCalculatingFee(false);
     }
@@ -63,6 +114,18 @@ const CartPage = () => {
       setError("Please enter a shipping address.");
       return;
     }
+    if (shippingProvider === "GHN") {
+      if (!recipientName || !recipientPhone || !districtId || !wardCode) {
+        setError(
+          "Please complete all GHN delivery fields and calculate the fee.",
+        );
+        return;
+      }
+      if (shippingFee === 0) {
+        setError("Please calculate the shipping fee first.");
+        return;
+      }
+    }
 
     setPlacingOrder(true);
     setError("");
@@ -70,12 +133,12 @@ const CartPage = () => {
       const order = await ordersApi.checkout(items, {
         shippingAddress: shippingAddress.trim(),
         shippingProvider,
-        shippingFee: shippingProvider === "IN_HOUSE" ? 15000 : shippingFee,
+        shippingFee: effectiveFee,
         toName: shippingProvider === "GHN" ? recipientName : undefined,
         toPhone: shippingProvider === "GHN" ? recipientPhone : undefined,
         toDistrictId:
-          shippingProvider === "GHN" ? Number(toDistrictId) : undefined,
-        toWardCode: shippingProvider === "GHN" ? toWardCode : undefined,
+          shippingProvider === "GHN" ? Number(districtId) : undefined,
+        toWardCode: shippingProvider === "GHN" ? wardCode : undefined,
       });
       clearCart();
       navigate(`/orders/${order.id}`);
@@ -181,7 +244,6 @@ const CartPage = () => {
                 borderRadius: "12px",
               }}
             />
-
             <div style={{ flex: 1 }}>
               <p style={{ margin: 0, fontWeight: "500", color: "#2b2825" }}>
                 {item.name}
@@ -196,17 +258,7 @@ const CartPage = () => {
               >
                 {formatUSD(item.price)}
               </p>
-              <p
-                style={{
-                  margin: "1px 0 0",
-                  color: "#a39c8f",
-                  fontSize: "0.74rem",
-                }}
-              >
-                {formatVND(item.price)}
-              </p>
             </div>
-
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <button
                 onClick={() => updateQuantity(item.id, item.quantity - 1)}
@@ -218,9 +270,6 @@ const CartPage = () => {
                   backgroundColor: "#fff",
                   color: "#2b2825",
                   cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
                 }}
               >
                 −
@@ -244,15 +293,11 @@ const CartPage = () => {
                   backgroundColor: "#fff",
                   color: "#2b2825",
                   cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
                 }}
               >
                 +
               </button>
             </div>
-
             <button
               onClick={() => removeFromCart(item.id)}
               style={{
@@ -271,7 +316,8 @@ const CartPage = () => {
         ))}
       </div>
 
-      <div style={{ marginTop: "24px", marginBottom: "16px" }}>
+      {/* ── Delivery method ── */}
+      <div style={{ marginTop: "28px" }}>
         <label
           style={{
             display: "block",
@@ -304,8 +350,8 @@ const CartPage = () => {
               checked={shippingProvider === "IN_HOUSE"}
               onChange={() => setShippingProvider("IN_HOUSE")}
             />
-            <span style={{ fontSize: "0.85rem" }}>
-              In-house Delivery (15,000₫)
+            <span style={{ fontSize: "0.84rem" }}>
+              In-house — {(15000).toLocaleString()}₫
             </span>
           </label>
           <label
@@ -328,65 +374,109 @@ const CartPage = () => {
               checked={shippingProvider === "GHN"}
               onChange={() => setShippingProvider("GHN")}
             />
-            <span style={{ fontSize: "0.85rem" }}>Fast delievery (GHN)</span>
+            <span style={{ fontSize: "0.84rem" }}>Giao Hàng Nhanh</span>
           </label>
         </div>
 
         {shippingProvider === "GHN" && (
           <div
             style={{
-              marginTop: "12px",
+              marginTop: "14px",
               display: "flex",
               flexDirection: "column",
-              gap: "8px",
+              gap: "10px",
+              padding: "16px",
+              backgroundColor: "#fff",
+              borderRadius: "16px",
+              border: "1px solid #ece6dc",
             }}
           >
-            <input
-              placeholder="Recipient name"
-              value={recipientName}
-              onChange={(e) => setRecipientName(e.target.value)}
-              style={ghnInputStyle}
-            />
-            <input
-              placeholder="Recipient phone"
-              value={recipientPhone}
-              onChange={(e) => setRecipientPhone(e.target.value)}
-              style={ghnInputStyle}
-            />
-            <input
-              placeholder="District ID (from GHN)"
-              value={toDistrictId}
-              onChange={(e) => setToDistrictId(e.target.value)}
-              style={ghnInputStyle}
-            />
-            <input
-              placeholder="Ward code (from GHN)"
-              value={toWardCode}
-              onChange={(e) => setToWardCode(e.target.value)}
-              style={ghnInputStyle}
-            />
+            <div style={{ display: "flex", gap: "10px" }}>
+              <input
+                placeholder="Recipient name"
+                value={recipientName}
+                onChange={(e) => setRecipientName(e.target.value)}
+                style={{ ...inputStyle, flex: 1 }}
+              />
+              <input
+                placeholder="Phone number"
+                value={recipientPhone}
+                onChange={(e) => setRecipientPhone(e.target.value)}
+                style={{ ...inputStyle, flex: 1 }}
+              />
+            </div>
+
+            <select
+              value={provinceId}
+              onChange={(e) => setProvinceId(e.target.value)}
+              style={inputStyle}
+              disabled={loadingProvinces}
+            >
+              <option value="">
+                {loadingProvinces
+                  ? "Loading provinces..."
+                  : "Select Province/City"}
+              </option>
+              {provinces.map((p) => (
+                <option key={p.ProvinceID} value={p.ProvinceID}>
+                  {p.ProvinceName}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={districtId}
+              onChange={(e) => setDistrictId(e.target.value)}
+              style={inputStyle}
+              disabled={!provinceId}
+            >
+              <option value="">Select District</option>
+              {districts.map((d) => (
+                <option key={d.DistrictID} value={d.DistrictID}>
+                  {d.DistrictName}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={wardCode}
+              onChange={(e) => setWardCode(e.target.value)}
+              style={inputStyle}
+              disabled={!districtId}
+            >
+              <option value="">Select Ward</option>
+              {wards.map((w) => (
+                <option key={w.WardCode} value={w.WardCode}>
+                  {w.WardName}
+                </option>
+              ))}
+            </select>
+
             <button
-              onClick={handleCalculateGhnFee}
-              disabled={calculatingFee}
+              onClick={handleCalculateFee}
+              disabled={calculatingFee || !wardCode}
               style={{
-                padding: "10px",
-                borderRadius: "12px",
+                padding: "11px",
+                borderRadius: "14px",
                 border: "1px solid #2b2825",
                 backgroundColor: "#fff",
                 color: "#2b2825",
                 cursor: "pointer",
-                fontSize: "0.82rem",
+                fontSize: "0.84rem",
+                fontWeight: "500",
               }}
             >
               {calculatingFee
                 ? "Calculating..."
-                : `Calculate Fee${shippingFee ? ` — ${shippingFee.toLocaleString()}₫` : ""}`}
+                : shippingFee > 0
+                  ? `Fee: ${shippingFee.toLocaleString()}₫ — Recalculate`
+                  : "Calculate Shipping Fee"}
             </button>
           </div>
         )}
       </div>
 
-      <div style={{ marginTop: "28px" }}>
+      <div style={{ marginTop: "20px" }}>
         <label
           style={{
             display: "block",
@@ -404,12 +494,8 @@ const CartPage = () => {
           placeholder="Street, city, district, country..."
           rows={2}
           style={{
+            ...inputStyle,
             width: "100%",
-            padding: "12px 16px",
-            borderRadius: "14px",
-            border: "1px solid #ece6dc",
-            fontSize: "0.88rem",
-            boxSizing: "border-box",
             resize: "vertical",
             fontFamily: "inherit",
           }}
@@ -438,62 +524,86 @@ const CartPage = () => {
           backgroundColor: "#fff",
           borderRadius: "16px",
           border: "1px solid #ece6dc",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
         }}
       >
-        <div>
-          <p style={{ margin: 0, color: "#a39c8f", fontSize: "0.8rem" }}>
-            Total
-          </p>
-          <p
-            style={{
-              margin: "2px 0 0",
-              fontSize: "1.4rem",
-              fontWeight: "600",
-              color: "#2b2825",
-            }}
-          >
-            {formatUSD(totalPrice)}
-          </p>
-          <p style={{ margin: 0, fontSize: "0.78rem", color: "#a39c8f" }}>
-            {formatVND(totalPrice)}
-          </p>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            fontSize: "0.85rem",
+            color: "#5c574d",
+            marginBottom: "6px",
+          }}
+        >
+          <span>Subtotal</span>
+          <span>{formatUSD(totalPrice)}</span>
         </div>
-
-        <div style={{ display: "flex", gap: "10px" }}>
-          <button
-            onClick={clearCart}
-            style={{
-              padding: "12px 20px",
-              backgroundColor: "transparent",
-              color: "#8a8378",
-              border: "1px solid #ece6dc",
-              borderRadius: "30px",
-              cursor: "pointer",
-              fontSize: "0.85rem",
-            }}
-          >
-            Clear
-          </button>
-          <button
-            onClick={handleCheckout}
-            disabled={placingOrder}
-            style={{
-              padding: "12px 28px",
-              backgroundColor: "#2b2825",
-              color: "#faf7f2",
-              border: "none",
-              borderRadius: "30px",
-              cursor: "pointer",
-              fontSize: "0.85rem",
-              fontWeight: "500",
-              opacity: placingOrder ? 0.7 : 1,
-            }}
-          >
-            {placingOrder ? "Placing..." : "Checkout"}
-          </button>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            fontSize: "0.85rem",
+            color: "#5c574d",
+            marginBottom: "12px",
+          }}
+        >
+          <span>Shipping</span>
+          <span>{formatVND(effectiveFee / 25400)}</span>
+        </div>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            paddingTop: "12px",
+            borderTop: "1px solid #ece6dc",
+          }}
+        >
+          <div>
+            <p
+              style={{
+                margin: 0,
+                fontSize: "1.4rem",
+                fontWeight: "600",
+                color: "#2b2825",
+              }}
+            >
+              {formatUSD(totalPrice + effectiveFee / 25400)}
+            </p>
+          </div>
+          <div style={{ display: "flex", gap: "10px" }}>
+            <button
+              onClick={clearCart}
+              style={{
+                padding: "12px 20px",
+                backgroundColor: "transparent",
+                color: "#8a8378",
+                border: "1px solid #ece6dc",
+                borderRadius: "30px",
+                cursor: "pointer",
+                fontSize: "0.85rem",
+              }}
+            >
+              Clear
+            </button>
+            <button
+              onClick={handleCheckout}
+              disabled={placingOrder}
+              style={{
+                padding: "12px 28px",
+                backgroundColor: "#2b2825",
+                color: "#faf7f2",
+                border: "none",
+                borderRadius: "30px",
+                cursor: "pointer",
+                fontSize: "0.85rem",
+                fontWeight: "500",
+                opacity: placingOrder ? 0.7 : 1,
+              }}
+            >
+              {placingOrder ? "Placing..." : "Checkout"}
+            </button>
+          </div>
         </div>
       </div>
     </section>

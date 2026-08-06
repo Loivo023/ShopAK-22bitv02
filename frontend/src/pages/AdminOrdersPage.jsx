@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ordersApi } from "../api/ordersApi";
+import { formatUSD } from "../utils/currency";
 
 const STATUS_META = {
-  PLACED: { color: "#1976d2", label: "Placed" },
-  PROCESSING: { color: "#f59e0b", label: "Processing" },
-  SHIPPED: { color: "#8e24aa", label: "Shipped" },
-  COMPLETED: { color: "#2e7d32", label: "Completed" },
-  CANCELED: { color: "#e53935", label: "Canceled" },
+  PLACED: { color: "#8b8fa3", bg: "#f1f2f6" },
+  PROCESSING: { color: "#d97706", bg: "#fef3c7" },
+  SHIPPED: { color: "#7c3aed", bg: "#ede9fe" },
+  COMPLETED: { color: "#16a34a", bg: "#dcfce7" },
+  CANCELED: { color: "#dc2626", bg: "#fee2e2" },
+  FAILED: { color: "#dc2626", bg: "#fee2e2" },
 };
 
 const FILTERS = [
@@ -17,29 +19,22 @@ const FILTERS = [
   "SHIPPED",
   "COMPLETED",
   "CANCELED",
+  "FAILED",
 ];
 
 const AdminOrdersPage = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const perPage = 8;
 
   useEffect(() => {
-    const fetchOrders = async () => {
-      setLoading(true);
-      setError("");
-      try {
-        const data = await ordersApi.getAllForAdmin();
-        setOrders(data);
-      } catch (err) {
-        setError("Failed to load orders.");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchOrders();
+    ordersApi
+      .getAllForAdmin()
+      .then(setOrders)
+      .finally(() => setLoading(false));
   }, []);
 
   const filtered = orders
@@ -48,159 +43,279 @@ const AdminOrdersPage = () => {
       (o) => search.trim() === "" || String(o.id).includes(search.trim()),
     );
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+  const paginated = filtered.slice((page - 1) * perPage, page * perPage);
+
   if (loading)
     return (
-      <p style={{ padding: "24px", textAlign: "center", color: "#888" }}>
-        Loading orders...
-      </p>
-    );
-  if (error)
-    return (
-      <p style={{ padding: "24px", textAlign: "center", color: "red" }}>
-        {error}
-      </p>
+      <p style={{ padding: "28px", color: "#8b8fa3" }}>Loading orders...</p>
     );
 
   return (
     <div style={{ padding: "28px 32px 60px" }}>
-      <h2 style={{ color: "#14162b", marginBottom: "4px", fontSize: "1.4rem" }}>
+      <h1
+        style={{
+          margin: "0 0 4px",
+          fontSize: "1.5rem",
+          fontWeight: "800",
+          color: "#14162b",
+        }}
+      >
         Orders
-      </h2>
-      <p style={{ color: "#8b8fa3", marginBottom: "20px", fontSize: "0.9rem" }}>
+      </h1>
+      <p style={{ margin: "0 0 22px", color: "#8b8fa3", fontSize: "0.9rem" }}>
         Manage and track all customer orders.
       </p>
 
       <div
         style={{
-          display: "flex",
-          gap: "10px",
-          flexWrap: "wrap",
-          alignItems: "center",
-          marginBottom: "18px",
+          background: "#fff",
+          borderRadius: "18px",
+          border: "1px solid #eef0f5",
+          overflow: "hidden",
         }}
       >
-        <input
-          type="text"
-          placeholder="Search by order #..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={{
-            padding: "8px 12px",
-            borderRadius: "8px",
-            border: "1px solid #e4e6ee",
-            fontSize: "0.88rem",
-            minWidth: "180px",
-          }}
-        />
         <div
           style={{
             display: "flex",
-            gap: "4px",
-            background: "#f5f6fb",
-            padding: "4px",
-            borderRadius: "10px",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "16px 20px",
+            borderBottom: "1px solid #f0f1f5",
             flexWrap: "wrap",
+            gap: "12px",
           }}
         >
-          {FILTERS.map((f) => (
+          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+            {FILTERS.map((f) => (
+              <button
+                key={f}
+                onClick={() => {
+                  setFilter(f);
+                  setPage(1);
+                }}
+                style={{
+                  padding: "7px 14px",
+                  borderRadius: "20px",
+                  border: "none",
+                  fontSize: "0.78rem",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  backgroundColor: filter === f ? "#14162b" : "#f5f6fb",
+                  color: filter === f ? "#fff" : "#8b8fa3",
+                }}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
+          <input
+            placeholder="Search order #..."
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
+            style={{
+              padding: "9px 14px",
+              borderRadius: "10px",
+              border: "1px solid #e4e6ee",
+              fontSize: "0.84rem",
+              minWidth: "180px",
+            }}
+          />
+        </div>
+
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead>
+              <tr style={{ backgroundColor: "#fafbfc" }}>
+                {[
+                  "Order",
+                  "Customer",
+                  "Status",
+                  "Provider",
+                  "Date",
+                  "Total",
+                  "",
+                ].map((h) => (
+                  <th
+                    key={h}
+                    style={{
+                      textAlign: "left",
+                      padding: "12px 20px",
+                      fontSize: "0.72rem",
+                      fontWeight: "700",
+                      color: "#a0a3b5",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.4px",
+                    }}
+                  >
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {paginated.map((o) => {
+                const meta = STATUS_META[o.status] || {
+                  color: "#8b8fa3",
+                  bg: "#f1f2f6",
+                };
+                return (
+                  <tr key={o.id} style={{ borderTop: "1px solid #f0f1f5" }}>
+                    <td
+                      style={{
+                        padding: "14px 20px",
+                        fontWeight: "700",
+                        color: "#14162b",
+                        fontSize: "0.85rem",
+                      }}
+                    >
+                      #{o.id}
+                    </td>
+                    <td style={{ padding: "14px 20px" }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: "28px",
+                            height: "28px",
+                            borderRadius: "50%",
+                            background:
+                              "linear-gradient(135deg,#7c6cff,#4f46e5)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: "#fff",
+                            fontSize: "0.7rem",
+                            fontWeight: "700",
+                          }}
+                        >
+                          U{o.id}
+                        </div>
+                        <span style={{ fontSize: "0.82rem", color: "#5c5f78" }}>
+                          User #{o.id}
+                        </span>
+                      </div>
+                    </td>
+                    <td style={{ padding: "14px 20px" }}>
+                      <span
+                        style={{
+                          fontSize: "0.72rem",
+                          fontWeight: "700",
+                          padding: "3px 12px",
+                          borderRadius: "20px",
+                          backgroundColor: meta.bg,
+                          color: meta.color,
+                        }}
+                      >
+                        {o.status}
+                      </span>
+                    </td>
+                    <td
+                      style={{
+                        padding: "14px 20px",
+                        fontSize: "0.82rem",
+                        color: "#8b8fa3",
+                      }}
+                    >
+                      {o.shipping_provider || "IN_HOUSE"}
+                    </td>
+                    <td
+                      style={{
+                        padding: "14px 20px",
+                        fontSize: "0.82rem",
+                        color: "#8b8fa3",
+                      }}
+                    >
+                      {new Date(o.created_at).toLocaleDateString()}
+                    </td>
+                    <td
+                      style={{
+                        padding: "14px 20px",
+                        fontWeight: "700",
+                        color: "#4f46e5",
+                        fontSize: "0.85rem",
+                      }}
+                    >
+                      {formatUSD(o.total_amount)}
+                    </td>
+                    <td style={{ padding: "14px 20px" }}>
+                      <Link
+                        to={`/admin/orders/${o.id}`}
+                        style={{
+                          padding: "6px 16px",
+                          backgroundColor: "#14162b",
+                          color: "#fff",
+                          borderRadius: "8px",
+                          textDecoration: "none",
+                          fontSize: "0.78rem",
+                          fontWeight: "600",
+                        }}
+                      >
+                        Manage
+                      </Link>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "14px 20px",
+            borderTop: "1px solid #f0f1f5",
+          }}
+        >
+          <p style={{ margin: 0, fontSize: "0.8rem", color: "#a0a3b5" }}>
+            Showing {paginated.length ? (page - 1) * perPage + 1 : 0}–
+            {Math.min(page * perPage, filtered.length)} of {filtered.length}
+          </p>
+          <div style={{ display: "flex", gap: "6px" }}>
             <button
-              key={f}
-              onClick={() => setFilter(f)}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
               style={{
                 padding: "6px 12px",
                 borderRadius: "8px",
-                border: "none",
-                fontSize: "0.78rem",
-                fontWeight: "700",
-                cursor: "pointer",
-                backgroundColor: filter === f ? "#14162b" : "transparent",
-                color: filter === f ? "#fff" : "#8b8fa3",
+                border: "1px solid #e4e6ee",
+                backgroundColor: "#fff",
+                cursor: page === 1 ? "not-allowed" : "pointer",
+                fontSize: "0.8rem",
+                opacity: page === 1 ? 0.5 : 1,
               }}
             >
-              {f === "All" ? "All" : STATUS_META[f]?.label}
+              Prev
             </button>
-          ))}
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              style={{
+                padding: "6px 12px",
+                borderRadius: "8px",
+                border: "1px solid #e4e6ee",
+                backgroundColor: "#fff",
+                cursor: page === totalPages ? "not-allowed" : "pointer",
+                fontSize: "0.8rem",
+                opacity: page === totalPages ? 0.5 : 1,
+              }}
+            >
+              Next
+            </button>
+          </div>
         </div>
       </div>
-
-      <p
-        style={{ color: "#8b8fa3", fontSize: "0.85rem", marginBottom: "12px" }}
-      >
-        Showing {filtered.length} of {orders.length} orders
-      </p>
-
-      {filtered.length === 0 ? (
-        <p style={{ color: "#a0a3b5", textAlign: "center", padding: "40px 0" }}>
-          No orders match your filters.
-        </p>
-      ) : (
-        <div
-          style={{
-            background: "#fff",
-            borderRadius: "16px",
-            border: "1px solid #eef0f5",
-            overflow: "hidden",
-          }}
-        >
-          {filtered.map((o, idx) => (
-            <div
-              key={o.id}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                padding: "14px 20px",
-                borderBottom:
-                  idx === filtered.length - 1 ? "none" : "1px solid #f0f1f5",
-              }}
-            >
-              <p
-                style={{
-                  margin: 0,
-                  fontWeight: "600",
-                  color: "#14162b",
-                  minWidth: "90px",
-                }}
-              >
-                #{o.id}
-              </p>
-              <span
-                style={{
-                  padding: "3px 12px",
-                  borderRadius: "20px",
-                  fontSize: "0.76rem",
-                  fontWeight: "700",
-                  color: "#fff",
-                  backgroundColor:
-                    (STATUS_META[o.status] || {}).color || "#757575",
-                }}
-              >
-                {(STATUS_META[o.status] || {}).label || o.status}
-              </span>
-              <p style={{ margin: 0, fontWeight: "700", color: "#4f46e5" }}>
-                ${o.total_amount.toFixed(2)}
-              </p>
-              <p style={{ margin: 0, fontSize: "0.82rem", color: "#a0a3b5" }}>
-                {new Date(o.created_at).toLocaleDateString()}
-              </p>
-              <Link
-                to={`/admin/orders/${o.id}`}
-                style={{
-                  padding: "6px 16px",
-                  backgroundColor: "#14162b",
-                  color: "#fff",
-                  borderRadius: "8px",
-                  textDecoration: "none",
-                  fontSize: "0.82rem",
-                  fontWeight: "600",
-                }}
-              >
-                Manage
-              </Link>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 };
