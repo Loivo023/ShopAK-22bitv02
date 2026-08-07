@@ -259,7 +259,7 @@ const OrderDetailPage = () => {
           </p>
         ) : (
           <p style={{ fontSize: "0.86rem", color: "#5c574d" }}>
-            Đơn vị vận chuyển: Đội xe ShopAK
+            Shipping provider: ShopAK
           </p>
         )}
 

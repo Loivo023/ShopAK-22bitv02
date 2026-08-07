@@ -25,6 +25,11 @@ from routers.shipper import router as shipper_router
 from routers.fleet import router as fleet_router
 from routers.inventory import router as inventory_router
 from routers.shipper_reports import router as shipper_reports_router
+from routers.wishlist import router as wishlist_router
+from routers.recently_viewed import router as recently_viewed_router
+from routers.vouchers import router as vouchers_router
+from routers.profile import router as profile_router
+from routers.chat import router as chat_router
 
 
 Base.metadata.create_all(bind=engine)
@@ -66,6 +71,11 @@ app.include_router(shipper_router)
 app.include_router(fleet_router)
 app.include_router(inventory_router)
 app.include_router(shipper_reports_router)
+app.include_router(wishlist_router)
+app.include_router(recently_viewed_router)
+app.include_router(vouchers_router)
+app.include_router(profile_router)
+app.include_router(chat_router)
 
 
 @app.get("/")

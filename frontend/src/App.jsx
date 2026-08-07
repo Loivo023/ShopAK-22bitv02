@@ -37,6 +37,8 @@ import ShipperRoute from "./routes/ShipperRoute";
 import OrdersPageShipper from "./pages/shipper/OrdersPage";
 import DriversPage from "./pages/shipper/DriversPage";
 import AdminAnalyticsPage from "./pages/AdminAnalyticsPage";
+import ChatWidget from "./Components/ChatWidget";
+import AdminSupportChatPage from "./pages/AdminSupportChatPage";
 
 const StoreLayout = ({ children }) => (
   <div
@@ -53,6 +55,7 @@ const StoreLayout = ({ children }) => (
       studentName="Võ Thành Lợi & Lê Nguyễn Hoàng Long"
       courseName="Full-Stack Web Development"
     />
+    <ChatWidget />
   </div>
 );
 
@@ -76,6 +79,14 @@ const App = () => {
           <Route path="/admin/shipments" element={<ShipmentsPage />} />
           <Route path="/admin/fleet" element={<FleetPage />} />
           <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
+          <Route
+            path="/admin/support"
+            element={<AdminSupportChatPage listType="support" />}
+          />
+          <Route
+            path="/admin/shipper-chat"
+            element={<AdminSupportChatPage listType="shipper" />}
+          />
         </Route>
       </Route>
 

@@ -12,26 +12,33 @@ router = APIRouter(prefix="/products", tags=["products"])
 
 @router.get("", response_model=List[ProductRead])
 def list_products(
-    category: Optional[str] = Query(None, description="Filter by category"),
-    page:     int           = Query(1, ge=1),
-    size:     int           = Query(10, ge=1, le=100),
+    category: Optional[str] = Query(None),
+    search:   Optional[str] = Query(None),
+    sort:     Optional[str] = Query(None),  # "newest" | "bestselling" | None
+    page:     int = Query(1, ge=1),
+    size:     int = Query(10, ge=1, le=100),
     db: Session = Depends(get_db),
 ):
     query = db.query(ProductDB)
     if category:
         query = query.filter(ProductDB.category.ilike(category))
+    if search:
+        query = query.filter(ProductDB.name.ilike(f"%{search}%"))
+
+    if sort == "newest":
+        query = query.order_by(ProductDB.id.desc())
+    elif sort == "bestselling":
+        from models.order import OrderItemDB
+        from sqlalchemy import func
+        sold = (
+            db.query(OrderItemDB.product_id, func.sum(OrderItemDB.quantity).label("total_sold"))
+            .group_by(OrderItemDB.product_id).subquery()
+        )
+        query = query.outerjoin(sold, sold.c.product_id == ProductDB.id).order_by(sold.c.total_sold.desc().nullslast())
 
     offset = (page - 1) * size
     products = query.offset(offset).limit(size).all()
-
-    return [
-        ProductRead(
-            id=p.id, name=p.name, price=p.price,
-            category=p.category, description=p.description,
-            imageUrl=p.image_path,
-        )
-        for p in products
-    ]
+    return [ProductRead(id=p.id, name=p.name, price=p.price, category=p.category, description=p.description, imageUrl=p.image_path) for p in products]
 
 
 @router.get("/{product_id}", response_model=ProductRead)
