@@ -20,6 +20,9 @@ def _to_order_read(order: OrderDB) -> OrderRead:
         shipper_id=order.shipper_id, carrier=order.carrier,
         tracking_number=order.tracking_number,
         shipped_at=str(order.shipped_at) if order.shipped_at else None,
+        customer_name=order.user.full_name if order.user else None,
+        customer_email=order.user.email if order.user else None,
+        customer_phone=order.user.phone if order.user else None,
         items=[
             OrderItemRead(
                 id=oi.id, product_id=oi.product_id, product_name=oi.product_name,
@@ -75,6 +78,39 @@ def accept_delivery(order_id: int, db: Session = Depends(get_db), user=Depends(r
     db.refresh(order)
     return _to_order_read(order)
 
+@router.get("/{order_id}", response_model=OrderRead)
+def get_delivery_detail(
+    order_id: int,
+    db: Session = Depends(get_db),
+    user=Depends(require_shipper),
+):
+    order = (
+        db.query(OrderDB)
+        .filter(OrderDB.id == order_id)
+        .first()
+    )
+
+    if not order:
+        raise HTTPException(
+            status_code=404,
+            detail="Order not found",
+        )
+
+    # A shipper can only view:
+    # 1. Their own shipment
+    # 2. An available IN_HOUSE shipment
+    if order.shipper_id != user.id:
+        if not (
+            order.shipping_provider == "IN_HOUSE"
+            and order.status == "PROCESSING"
+            and order.shipper_id is None
+        ):
+            raise HTTPException(
+                status_code=403,
+                detail="You are not allowed to view this delivery",
+            )
+
+    return _to_order_read(order)
 
 @router.patch("/{order_id}/status", response_model=OrderRead)
 def update_delivery_status(order_id: int, payload: ShipperStatusUpdate, db: Session = Depends(get_db), user=Depends(require_shipper)):

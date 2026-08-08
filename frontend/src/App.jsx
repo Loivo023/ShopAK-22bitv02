@@ -27,7 +27,9 @@ import AdminRoute from "./routes/AdminRoute";
 import PrivateRoute from "./routes/PrivateRoute";
 import AdminLayout from "./layouts/AdminLayout";
 import ShipperLayout from "./layouts/ShipperLayout";
+import DashboardPage from "./pages/shipper/DashboardPage";
 import ShipmentsPage from "./pages/shipper/ShipmentsPage";
+import ShipmentDetailPage from "./pages/shipper/ShipmentDetailPage";
 import FleetPage from "./pages/shipper/FleetPage";
 import InventoryPage from "./pages/shipper/InventoryPage";
 import ReportsPage from "./pages/shipper/ReportsPage";
@@ -94,8 +96,13 @@ const App = () => {
 
       <Route element={<ShipperRoute />}>
         <Route element={<ShipperLayout />}>
-          <Route path="/shipper" element={<ShipmentsPage />} />
+          <Route path="/shipper" element={<DashboardPage />} />
+          <Route path="/shipper/dashboard" element={<DashboardPage />} />
           <Route path="/shipper/shipments" element={<ShipmentsPage />} />
+          <Route
+            path="/shipper/shipments/:orderId"
+            element={<ShipmentDetailPage />}
+          />
           <Route path="/shipper/fleet" element={<FleetPage />} />
           <Route path="/shipper/inventory" element={<InventoryPage />} />
           <Route path="/shipper/reports" element={<ReportsPage />} />

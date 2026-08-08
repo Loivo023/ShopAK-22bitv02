@@ -40,20 +40,30 @@ class OrderItemRead(BaseModel):
 
 
 class OrderRead(BaseModel):
-    id:                int
-    status:            str
-    payment_status:    str
-    total_amount:      float
-    created_at:        str
-    shipping_address:  Optional[str] = None
+    id: int
+    status: str
+    payment_status: str
+    total_amount: float
+    created_at: str
+
+    shipping_address: Optional[str] = None
     shipping_provider: str
-    tracking_code:     Optional[str] = None
-    shipping_fee:      float
-    shipper_id:        Optional[int] = None
-    carrier:           Optional[str] = None
-    tracking_number:   Optional[str] = None
-    shipped_at:        Optional[str] = None
-    items:             List[OrderItemRead]
+
+    tracking_code: Optional[str] = None
+    shipping_fee: float
+
+    shipper_id: Optional[int] = None
+
+    carrier: Optional[str] = None
+    tracking_number: Optional[str] = None
+    shipped_at: Optional[str] = None
+
+    # Customer information
+    customer_name: Optional[str] = None
+    customer_email: Optional[str] = None
+    customer_phone: Optional[str] = None
+
+    items: List[OrderItemRead]
 
     class Config:
         from_attributes = True

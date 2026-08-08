@@ -43,4 +43,16 @@ export const shipperApi = {
       throw error;
     }
   },
+
+  async getDelivery(orderId) {
+    try {
+      const response = await axiosClient.get(`/shipper/${orderId}`);
+
+      return response.data;
+    } catch (error) {
+      handleApiError(error, "Failed to fetch delivery details");
+
+      throw error;
+    }
+  },
 };

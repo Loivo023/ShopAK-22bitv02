@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { shipperApi } from "../../api/shipperApi";
 import RouteProgress from "../../Components/RouteProgress";
 import { formatUSD } from "../../utils/currency";
@@ -9,6 +10,7 @@ const TABS = [
 ];
 
 const ShipmentsPage = () => {
+  const navigate = useNavigate();
   const [tab, setTab] = useState("mine");
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -296,6 +298,22 @@ const ShipmentsPage = () => {
                   </p>
                 </div>
               </div>
+
+              <button
+                onClick={() => navigate(`/shipper/shipments/${selected.id}`)}
+                style={{
+                  flex: 1,
+                  padding: "12px 0",
+                  borderRadius: "12px",
+                  border: "1px solid #4f46e5",
+                  background: "#fff",
+                  color: "#4f46e5",
+                  fontWeight: "700",
+                  cursor: "pointer",
+                }}
+              >
+                View Full Details
+              </button>
 
               <div style={{ display: "flex", gap: "10px", marginTop: "24px" }}>
                 {tab === "available" && (
