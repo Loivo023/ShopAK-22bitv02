@@ -5,6 +5,7 @@ from typing import List
 
 from database import get_db
 from models.order import OrderDB, OrderItemDB
+from models.user import UserDB
 from schemas.order import (CheckoutRequest, OrderRead, OrderItemRead, OrderSummary, AdminOrderRead, OrderStatusUpdate, OrderItemQuantityUpdate, ShipOrderRequest,)
 from auth.deps import get_current_user, require_admin
 from services.shipping.factory import get_shipping_strategy
@@ -125,8 +126,7 @@ def get_my_orders(db: Session = Depends(get_db), user=Depends(get_current_user))
     ]
 
 
-@router.get(
-    "/admin/all",
+@router.get("/admin/all",
     response_model=List[AdminOrderRead],
     dependencies=[Depends(require_admin)],
 )
@@ -137,24 +137,47 @@ def get_all_orders_for_admin(db: Session = Depends(get_db)):
         .all()
     )
 
-    return [
-        AdminOrderRead(
-            id=o.id,
-            user_id=o.user_id,
-            status=o.status,
-            payment_status=o.payment_status,
-            total_amount=o.total_amount,
-            shipping_fee=o.shipping_fee,
-            shipping_provider=o.shipping_provider,
-            tracking_code=o.tracking_code,
-            shipper_id=o.shipper_id,
-            carrier=o.carrier,
-            tracking_number=o.tracking_number,
-            shipped_at=str(o.shipped_at) if o.shipped_at else None,
-            created_at=str(o.created_at),
+    result = []
+
+    for o in orders:
+        customer = o.user
+        shipper = o.shipper
+
+        result.append(
+            AdminOrderRead(
+                id=o.id,
+
+                # Customer
+                user_id=o.user_id,
+                customer_name=customer.full_name if customer else None,
+                customer_email=customer.email if customer else None,
+                customer_phone=customer.phone if customer else None,
+
+                # Order
+                status=o.status,
+                payment_status=o.payment_status,
+                total_amount=o.total_amount,
+                shipping_fee=o.shipping_fee,
+
+                shipping_provider=o.shipping_provider,
+                tracking_code=o.tracking_code,
+
+                # Shipper
+                shipper_id=o.shipper_id,
+                shipper_name=shipper.full_name if shipper else None,
+                shipper_email=shipper.email if shipper else None,
+                shipper_phone=shipper.phone if shipper else None,
+
+                # Shipping
+                carrier=o.carrier,
+                tracking_number=o.tracking_number,
+                shipped_at=str(o.shipped_at) if o.shipped_at else None,
+
+                created_at=str(o.created_at),
+            )
         )
-        for o in orders
-    ]
+
+    return result
 
 
 @router.get("/{order_id}", response_model=OrderRead)

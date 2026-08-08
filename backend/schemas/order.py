@@ -75,17 +75,30 @@ class OrderRead(BaseModel):
 
 class AdminOrderRead(BaseModel):
     id: int
+
     user_id: int
+    customer_name: str | None = None
+    customer_email: str | None = None
+    customer_phone: str | None = None
+
     status: str
     payment_status: str
+
     total_amount: float
     shipping_fee: float
+
     shipping_provider: str | None = None
     tracking_code: str | None = None
+
     shipper_id: int | None = None
+    shipper_name: str | None = None
+    shipper_email: str | None = None
+    shipper_phone: str | None = None
+
     carrier: str | None = None
     tracking_number: str | None = None
     shipped_at: str | None = None
+
     created_at: str
 
 class OrderSummary(BaseModel):

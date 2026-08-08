@@ -67,6 +67,18 @@ const AdminOrdersPage = () => {
         String(o.id).includes(query) ||
         String(o.user_id).includes(query) ||
         String(o.shipper_id || "").includes(query) ||
+        String(o.customer_name || "")
+          .toLowerCase()
+          .includes(query) ||
+        String(o.customer_email || "")
+          .toLowerCase()
+          .includes(query) ||
+        String(o.shipper_name || "")
+          .toLowerCase()
+          .includes(query) ||
+        String(o.shipper_email || "")
+          .toLowerCase()
+          .includes(query) ||
         String(o.tracking_number || "")
           .toLowerCase()
           .includes(query) ||
@@ -329,9 +341,33 @@ const AdminOrdersPage = () => {
                           whiteSpace: "nowrap",
                         }}
                       >
-                        {o.shipper_id
-                          ? `Shipper #${o.shipper_id}`
-                          : "Unassigned"}
+                        {o.shipper_id ? (
+                          <div>
+                            <p
+                              style={{
+                                margin: 0,
+                                fontWeight: "600",
+                                color: "#5c5f78",
+                              }}
+                            >
+                              {o.shipper_name || `Shipper #${o.shipper_id}`}
+                            </p>
+
+                            {o.shipper_phone && (
+                              <p
+                                style={{
+                                  margin: "2px 0 0",
+                                  fontSize: "0.7rem",
+                                  color: "#a0a3b5",
+                                }}
+                              >
+                                {o.shipper_phone}
+                              </p>
+                            )}
+                          </div>
+                        ) : (
+                          "Unassigned"
+                        )}
                       </td>
 
                       {/* STATUS */}
