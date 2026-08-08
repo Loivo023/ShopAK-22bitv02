@@ -22,6 +22,7 @@ router = APIRouter(prefix="/shipper", tags=["shipper"])
 def _to_order_read(order: OrderDB) -> OrderRead:
     return OrderRead(
         id=order.id, status=order.status, payment_status=order.payment_status,
+        payment_provider=(order.payments[-1].provider if hasattr(order, "payments") and order.payments else None),
         total_amount=order.total_amount, created_at=str(order.created_at),
         shipping_address=order.shipping_address, shipping_provider=order.shipping_provider,
         tracking_code=order.tracking_code, shipping_fee=order.shipping_fee,
@@ -167,6 +168,22 @@ def update_delivery_status(
                 f"Cannot change status from "
                 f"{order.status} to {payload.status}."
             ),
+        )
+
+    if payload.status == "COMPLETED": cod_payment = (
+        db.query(PaymentDB)
+        .filter(
+            PaymentDB.order_id == order.id,
+            PaymentDB.provider == "cod",
+        )
+        .order_by(PaymentDB.id.desc())
+        .first()
+    )
+
+    if cod_payment and order.payment_status != "PAID":
+        raise HTTPException(
+            status_code=400,
+            detail="COD payment must be collected before completing the delivery."
         )
 
     # Update status

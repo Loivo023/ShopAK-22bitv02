@@ -56,13 +56,21 @@ export const shipperApi = {
     }
   },
 
-  collectCOD: async (orderId, amountReceived, note = "") => {
-    const response = await api.post(`/shipper/${orderId}/cod/collect`, {
-      amount_received: amountReceived,
-      note,
-    });
+  async collectCOD(orderId, amountReceived, note = "") {
+    try {
+      const response = await axiosClient.post(
+        `/shipper/${orderId}/cod/collect`,
+        {
+          amount_received: Number(amountReceived),
+          note,
+        },
+      );
 
-    return response.data;
+      return response.data;
+    } catch (error) {
+      handleApiError(error, "Failed to collect COD payment");
+      throw error;
+    }
   },
 
   async failDelivery(orderId, reason) {

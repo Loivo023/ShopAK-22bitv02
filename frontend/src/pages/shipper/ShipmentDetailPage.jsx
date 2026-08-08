@@ -116,6 +116,39 @@ const ShipmentDetailPage = () => {
   };
 
   // =========================
+  // COD
+  // =========================
+
+  const submitCOD = async () => {
+    if (!order) return;
+
+    if (!codAmount || Number(codAmount) <= 0) {
+      alert("Please enter the amount received.");
+      return;
+    }
+
+    try {
+      setCodSubmitting(true);
+
+      const result = await shipperApi.collectCOD(order.id, Number(codAmount));
+
+      // Refresh the shipment so payment_status becomes PAID
+      await loadOrder();
+
+      setShowCodModal(false);
+      setCodAmount("");
+
+      alert(result?.message || "COD payment collected successfully.");
+    } catch (err) {
+      console.error(err);
+
+      alert(err?.response?.data?.detail || "Failed to collect COD payment.");
+    } finally {
+      setCodSubmitting(false);
+    }
+  };
+
+  // =========================
   // NAVIGATION
   // =========================
 
@@ -233,7 +266,158 @@ const ShipmentDetailPage = () => {
         </div>
 
         {/* COD modal */}
-        {showCodModal && <div>{/* modal content */}</div>}
+        {showCodModal && (
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(0, 0, 0, 0.45)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 1000,
+              padding: 20,
+            }}
+          >
+            <div
+              style={{
+                width: "100%",
+                maxWidth: 450,
+                background: "#fff",
+                borderRadius: 18,
+                padding: 28,
+                boxShadow: "0 20px 60px rgba(0,0,0,0.2)",
+              }}
+            >
+              <h2
+                style={{
+                  marginTop: 0,
+                  marginBottom: 8,
+                  color: "#14162b",
+                }}
+              >
+                💵 Collect COD Payment
+              </h2>
+
+              <p
+                style={{
+                  color: "#6b7280",
+                  marginBottom: 24,
+                }}
+              >
+                Confirm the amount you received from the customer.
+              </p>
+
+              <div
+                style={{
+                  background: "#f5f7ff",
+                  borderRadius: 12,
+                  padding: 16,
+                  marginBottom: 20,
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 12,
+                    color: "#8b8fa3",
+                    marginBottom: 5,
+                  }}
+                >
+                  Amount to collect
+                </div>
+
+                <div
+                  style={{
+                    fontSize: 24,
+                    fontWeight: 800,
+                    color: "#14162b",
+                  }}
+                >
+                  {formatUSD(order.total_amount)}
+                </div>
+              </div>
+
+              <label
+                style={{
+                  display: "block",
+                  fontWeight: 700,
+                  marginBottom: 8,
+                  color: "#14162b",
+                }}
+              >
+                Amount received
+              </label>
+
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={codAmount}
+                onChange={(e) => setCodAmount(e.target.value)}
+                placeholder="Enter amount received"
+                disabled={codSubmitting}
+                style={{
+                  width: "100%",
+                  boxSizing: "border-box",
+                  padding: "13px 14px",
+                  borderRadius: 10,
+                  border: "1px solid #d1d5db",
+                  fontSize: 15,
+                  marginBottom: 20,
+                }}
+              />
+
+              <div
+                style={{
+                  display: "flex",
+                  gap: 10,
+                }}
+              >
+                <button
+                  onClick={() => {
+                    setShowCodModal(false);
+                    setCodAmount("");
+                  }}
+                  disabled={codSubmitting}
+                  style={{
+                    flex: 1,
+                    padding: "12px 16px",
+                    borderRadius: 10,
+                    border: "1px solid #d1d5db",
+                    background: "#fff",
+                    cursor: "pointer",
+                    fontWeight: 700,
+                  }}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={submitCOD}
+                  disabled={
+                    codSubmitting || !codAmount || Number(codAmount) <= 0
+                  }
+                  style={{
+                    flex: 1,
+                    padding: "12px 16px",
+                    borderRadius: 10,
+                    border: "none",
+                    background: "#16a34a",
+                    color: "#fff",
+                    cursor: "pointer",
+                    fontWeight: 700,
+                    opacity:
+                      codSubmitting || !codAmount || Number(codAmount) <= 0
+                        ? 0.5
+                        : 1,
+                  }}
+                >
+                  {codSubmitting ? "Collecting..." : "Confirm Payment"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <StatusBadge status={order.status} />
       </div>
@@ -319,11 +503,24 @@ const ShipmentDetailPage = () => {
             value={order.payment_status || "UNKNOWN"}
           />
 
-          {order.payment_status !== "PAID" && order.status === "SHIPPED" && (
-            <button onClick={() => setShowCodModal(true)}>
-              💵 Collect COD
-            </button>
-          )}
+          {order.payment_status !== "PAID" &&
+            order.status === "SHIPPED" &&
+            order.payment_provider === "cod" && (
+              <button
+                onClick={() => setShowCodModal(true)}
+                style={{
+                  border: "none",
+                  background: "#16a34a",
+                  color: "#fff",
+                  padding: "11px 18px",
+                  borderRadius: 10,
+                  cursor: "pointer",
+                  fontWeight: 700,
+                }}
+              >
+                💵 Collect COD
+              </button>
+            )}
         </div>
       </section>
 

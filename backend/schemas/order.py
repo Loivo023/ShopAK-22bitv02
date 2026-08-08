@@ -43,6 +43,7 @@ class OrderRead(BaseModel):
     id: int
     status: str
     payment_status: str
+    payment_provider: Optional[str] = None
     total_amount: float
     created_at: str
 
