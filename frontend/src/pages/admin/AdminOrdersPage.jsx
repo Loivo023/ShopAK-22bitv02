@@ -320,14 +320,30 @@ const AdminOrdersPage = () => {
                             U
                           </div>
 
-                          <span
-                            style={{
-                              fontSize: "0.82rem",
-                              color: "#5c5f78",
-                            }}
-                          >
-                            User #{o.user_id}
-                          </span>
+                          <div>
+                            <p
+                              style={{
+                                margin: 0,
+                                fontSize: "0.82rem",
+                                fontWeight: "600",
+                                color: "#5c5f78",
+                              }}
+                            >
+                              {o.customer_name || `User #${o.user_id}`}
+                            </p>
+
+                            {o.customer_email && (
+                              <p
+                                style={{
+                                  margin: "2px 0 0",
+                                  fontSize: "0.7rem",
+                                  color: "#a0a3b5",
+                                }}
+                              >
+                                {o.customer_email}
+                              </p>
+                            )}
+                          </div>
                         </div>
                       </td>
 

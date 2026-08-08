@@ -41,6 +41,10 @@ import DriversPage from "./pages/shipper/DriversPage";
 import AdminAnalyticsPage from "./pages/admin/AdminAnalyticsPage";
 import ChatWidget from "./Components/ChatWidget";
 import AdminSupportChatPage from "./pages/admin/AdminSupportChatPage";
+import AdminOrderDetailsPage from "./pages/admin/AdminOrderDetailsPage";
+import AdminFleetPage from "./pages/admin/AdminFleetPage";
+import AdminReportsPage from "./pages/admin/AdminReportsPage";
+import AdminBillingPage from "./pages/admin/AdminBillingPage";
 import WishlistPage from "./pages/WishlistPage";
 import ProfilePage from "./pages/ProfilePage";
 
@@ -77,11 +81,15 @@ const App = () => {
             element={<ProductEditPage />}
           />
           <Route path="/admin/orders" element={<AdminOrdersPage />} />
-          <Route path="/admin/orders/:id" element={<OrderDetailPage />} />
+          <Route path="/admin/orders/:id" element={<AdminOrderDetailsPage />} />
+          <Route path="/admin/fleet" element={<FleetPage />} />
           <Route path="/admin/users" element={<AdminUsersPage />} />
           <Route path="/admin/shippers" element={<AdminShippersPage />} />
           <Route path="/admin/shipments" element={<ShipmentsPage />} />
-          <Route path="/admin/fleet" element={<FleetPage />} />
+          <Route path="/admin/fleet" element={<AdminFleetPage />} />
+          <Route path="/admin/reports" element={<AdminReportsPage />} />
+          <Route path="/admin/billing" element={<AdminBillingPage />} />
+          <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
           <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
           <Route
             path="/admin/support"

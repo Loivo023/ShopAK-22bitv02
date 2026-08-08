@@ -5,6 +5,7 @@ from typing import List
 
 from database import get_db
 from models.extras import ChatMessageDB
+from models.order import OrderDB
 from schemas.extras import ChatMessageCreate, ChatMessageRead
 from auth.deps import get_current_user, require_admin
 from services.chatbot import get_bot_reply
@@ -12,6 +13,10 @@ from services.chatbot import get_bot_reply
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
+
+# ============================================================
+# HELPER
+# ============================================================
 
 def _to_read(m: ChatMessageDB) -> ChatMessageRead:
     return ChatMessageRead(
@@ -25,23 +30,40 @@ def _to_read(m: ChatMessageDB) -> ChatMessageRead:
     )
 
 
-def _check_channel_access(channel: str, user):
+# ============================================================
+# CHANNEL ACCESS
+# ============================================================
+
+def _check_channel_access(
+    channel: str,
+    user,
+    db: Session,
+):
     """
     Supported channels:
 
     bot:<user_id>
         Customer/shipper can access their own bot conversation.
+        Admin can access everything.
 
     support:<customer_id>
         Customer can access their own support conversation.
-        Admin can access all support conversations.
+        Admin can access all customer support conversations.
 
     shipper:<shipper_id>
-        Shipper can access their own conversation.
+        Shipper can access their own admin conversation.
         Admin can access all shipper conversations.
+
+    order:<order_id>
+        Customer can access their own order conversation.
+        Assigned shipper can access the order conversation.
+        Admin can access everything.
     """
 
-    # Admin can access every channel
+    # --------------------------------------------------------
+    # ADMIN CAN ACCESS EVERYTHING
+    # --------------------------------------------------------
+
     if user.role == "ADMIN":
         return
 
@@ -63,7 +85,10 @@ def _check_channel_access(channel: str, user):
             detail="Invalid channel owner ID",
         )
 
-    # FAQ / AI Bot
+    # --------------------------------------------------------
+    # BOT
+    # --------------------------------------------------------
+
     if kind == "bot":
         if owner_id == user.id:
             return
@@ -73,7 +98,10 @@ def _check_channel_access(channel: str, user):
             detail="Not allowed on this bot channel",
         )
 
-    # Customer support
+    # --------------------------------------------------------
+    # CUSTOMER -> ADMIN
+    # --------------------------------------------------------
+
     if kind == "support":
         if user.role == "CUSTOMER" and owner_id == user.id:
             return
@@ -83,7 +111,10 @@ def _check_channel_access(channel: str, user):
             detail="Not allowed on this support channel",
         )
 
-    # Shipper support
+    # --------------------------------------------------------
+    # ADMIN -> SHIPPER
+    # --------------------------------------------------------
+
     if kind == "shipper":
         if user.role == "SHIPPER" and owner_id == user.id:
             return
@@ -91,6 +122,49 @@ def _check_channel_access(channel: str, user):
         raise HTTPException(
             status_code=403,
             detail="Not allowed on this shipper channel",
+        )
+
+    # --------------------------------------------------------
+    # CUSTOMER <-> SHIPPER
+    # --------------------------------------------------------
+
+    if kind == "order":
+
+        order = (
+            db.query(OrderDB)
+            .filter(OrderDB.id == owner_id)
+            .first()
+        )
+
+        if not order:
+            raise HTTPException(
+                status_code=404,
+                detail="Order not found",
+            )
+
+        # Customer who owns the order
+        if user.role == "CUSTOMER":
+            if order.user_id == user.id:
+                return
+
+            raise HTTPException(
+                status_code=403,
+                detail="You are not allowed to access this order chat",
+            )
+
+        # Shipper assigned to this order
+        if user.role == "SHIPPER":
+            if order.shipper_id == user.id:
+                return
+
+            raise HTTPException(
+                status_code=403,
+                detail="You are not the assigned shipper for this order",
+            )
+
+        raise HTTPException(
+            status_code=403,
+            detail="Not allowed on this order channel",
         )
 
     raise HTTPException(
@@ -103,7 +177,10 @@ def _check_channel_access(channel: str, user):
 # BOT
 # ============================================================
 
-@router.get("/bot/{user_id}", response_model=List[ChatMessageRead])
+@router.get(
+    "/bot/{user_id}",
+    response_model=List[ChatMessageRead],
+)
 def get_bot_messages(
     user_id: int,
     db: Session = Depends(get_db),
@@ -131,7 +208,11 @@ def get_bot_messages(
     return [_to_read(m) for m in msgs]
 
 
-@router.post("/bot", response_model=ChatMessageRead, status_code=201)
+@router.post(
+    "/bot",
+    response_model=ChatMessageRead,
+    status_code=201,
+)
 def send_to_bot(
     payload: ChatMessageCreate,
     db: Session = Depends(get_db),
@@ -145,9 +226,12 @@ def send_to_bot(
         bot:<user_id>
     """
 
-    _check_channel_access(payload.channel, user)
+    _check_channel_access(
+        payload.channel,
+        user,
+        db,
+    )
 
-    # Make sure this is actually a bot channel
     if not payload.channel.startswith("bot:"):
         raise HTTPException(
             status_code=400,
@@ -186,7 +270,7 @@ def send_to_bot(
 
 
 # ============================================================
-# ADMIN SUPPORT LIST
+# ADMIN - CUSTOMER SUPPORT LIST
 # ============================================================
 
 @router.get("/admin/support-list")
@@ -208,6 +292,7 @@ def list_support_conversations(
     result = []
 
     for (channel,) in channels:
+
         last = (
             db.query(ChatMessageDB)
             .filter(ChatMessageDB.channel == channel)
@@ -215,9 +300,15 @@ def list_support_conversations(
             .first()
         )
 
+        try:
+            customer_id = int(channel.split(":")[1])
+        except (ValueError, IndexError):
+            customer_id = None
+
         result.append(
             {
                 "channel": channel,
+                "customer_id": customer_id,
                 "last_message": last.message if last else "",
                 "last_at": str(last.created_at) if last else "",
             }
@@ -227,7 +318,7 @@ def list_support_conversations(
 
 
 # ============================================================
-# ADMIN SHIPPER LIST
+# ADMIN - SHIPPER CHAT LIST
 # ============================================================
 
 @router.get("/admin/shipper-list")
@@ -249,6 +340,7 @@ def list_shipper_conversations(
     result = []
 
     for (channel,) in channels:
+
         last = (
             db.query(ChatMessageDB)
             .filter(ChatMessageDB.channel == channel)
@@ -256,9 +348,15 @@ def list_shipper_conversations(
             .first()
         )
 
+        try:
+            shipper_id = int(channel.split(":")[1])
+        except (ValueError, IndexError):
+            shipper_id = None
+
         result.append(
             {
                 "channel": channel,
+                "shipper_id": shipper_id,
                 "last_message": last.message if last else "",
                 "last_at": str(last.created_at) if last else "",
             }
@@ -268,10 +366,107 @@ def list_shipper_conversations(
 
 
 # ============================================================
+# CUSTOMER <-> SHIPPER
+# ============================================================
+
+@router.get(
+    "/order/{order_id}",
+    response_model=List[ChatMessageRead],
+)
+def get_order_chat(
+    order_id: int,
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    """
+    Get chat messages for an order.
+
+    CUSTOMER:
+        Must own the order.
+
+    SHIPPER:
+        Must be assigned to the order.
+
+    ADMIN:
+        Can access everything.
+    """
+
+    channel = f"order:{order_id}"
+
+    _check_channel_access(
+        channel,
+        user,
+        db,
+    )
+
+    msgs = (
+        db.query(ChatMessageDB)
+        .filter(ChatMessageDB.channel == channel)
+        .order_by(asc(ChatMessageDB.created_at))
+        .all()
+    )
+
+    return [_to_read(m) for m in msgs]
+
+
+# ============================================================
+# SEND CUSTOMER <-> SHIPPER MESSAGE
+# ============================================================
+
+@router.post(
+    "/order",
+    response_model=ChatMessageRead,
+    status_code=201,
+)
+def send_order_chat_message(
+    payload: ChatMessageCreate,
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    """
+    Send a message between customer and assigned shipper.
+
+    Expected channel:
+
+        order:<order_id>
+    """
+
+    if not payload.channel.startswith("order:"):
+        raise HTTPException(
+            status_code=400,
+            detail="Order chat requires an order:<order_id> channel",
+        )
+
+    _check_channel_access(
+        payload.channel,
+        user,
+        db,
+    )
+
+    msg = ChatMessageDB(
+        channel=payload.channel,
+        sender_id=user.id,
+        sender_role=user.role,
+        message=payload.message,
+        is_bot=False,
+    )
+
+    db.add(msg)
+    db.commit()
+    db.refresh(msg)
+
+    return _to_read(msg)
+
+
+# ============================================================
 # GENERAL CHAT MESSAGE
 # ============================================================
 
-@router.post("", response_model=ChatMessageRead, status_code=201)
+@router.post(
+    "",
+    response_model=ChatMessageRead,
+    status_code=201,
+)
 def send_message(
     payload: ChatMessageCreate,
     db: Session = Depends(get_db),
@@ -281,13 +476,24 @@ def send_message(
     Send a normal support/shipper chat message.
     """
 
-    _check_channel_access(payload.channel, user)
+    _check_channel_access(
+        payload.channel,
+        user,
+        db,
+    )
 
     # Bot messages must use /bot endpoint
     if payload.channel.startswith("bot:"):
         raise HTTPException(
             status_code=400,
             detail="Use /chat/bot for bot messages",
+        )
+
+    # Order messages can use /chat/order
+    if payload.channel.startswith("order:"):
+        raise HTTPException(
+            status_code=400,
+            detail="Use /chat/order for order messages",
         )
 
     msg = ChatMessageDB(
@@ -309,23 +515,37 @@ def send_message(
 # GENERAL CHAT HISTORY
 # ============================================================
 
-@router.get("/{channel}", response_model=List[ChatMessageRead])
+@router.get(
+    "/{channel}",
+    response_model=List[ChatMessageRead],
+)
 def get_messages(
     channel: str,
     db: Session = Depends(get_db),
     user=Depends(get_current_user),
 ):
     """
-    Get messages for support:<id> or shipper:<id> channels.
+    Get messages for support: or shipper: channels.
     """
 
-    _check_channel_access(channel, user)
+    _check_channel_access(
+        channel,
+        user,
+        db,
+    )
 
-    # Bot history should use the dedicated bot endpoint.
+    # Bot history should use dedicated endpoint
     if channel.startswith("bot:"):
         raise HTTPException(
             status_code=400,
             detail="Use /chat/bot/{user_id} for bot history",
+        )
+
+    # Order history should use dedicated endpoint
+    if channel.startswith("order:"):
+        raise HTTPException(
+            status_code=400,
+            detail="Use /chat/order/{order_id} for order history",
         )
 
     msgs = (

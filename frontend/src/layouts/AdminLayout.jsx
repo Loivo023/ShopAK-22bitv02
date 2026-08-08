@@ -28,6 +28,10 @@ const ICONS = {
   logout: "M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9",
   menu: "M3 12h18M3 6h18M3 18h18",
   close: "M18 6 6 18M6 6l12 12",
+  truck:
+    "M3 6h11v10H3zM14 9h4l3 3v4h-7M7 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM18 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4z",
+
+  chart: "M4 19V5M4 19h16M8 16v-4M12 16V8M16 16V4M20 16V9",
 };
 
 const NAV_ITEMS = [
@@ -35,6 +39,10 @@ const NAV_ITEMS = [
   { label: "Products", to: "/admin/products", icon: ICONS.box },
   { label: "Orders", to: "/admin/orders", icon: ICONS.receipt },
   { label: "Users", to: "/admin/users", icon: ICONS.users },
+  { label: "Drivers & Fleet", to: "/admin/fleet", icon: ICONS.truck },
+  { label: "Reports", to: "/admin/reports", icon: ICONS.chart },
+  { label: "Billing", to: "/admin/billing", icon: ICONS.receipt },
+  { label: "Analytics", to: "/admin/analytics", icon: ICONS.chart },
 ];
 
 const AdminLayout = () => {

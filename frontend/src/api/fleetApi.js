@@ -1,37 +1,22 @@
 import axiosClient from "./axiosClient";
-import { handleApiError } from "./errorHandler";
 
 export const fleetApi = {
-  async getAll() {
-    try {
-      return (await axiosClient.get("/fleet")).data;
-    } catch (e) {
-      handleApiError(e, "Failed to fetch fleet");
-      throw e;
-    }
+  getAll: async () => {
+    const res = await axiosClient.get("/fleet");
+    return res.data;
   },
-  async create(vehicle) {
-    try {
-      return (await axiosClient.post("/fleet", vehicle)).data;
-    } catch (e) {
-      handleApiError(e, "Failed to add vehicle");
-      throw e;
-    }
+
+  create: async (vehicle) => {
+    const res = await axiosClient.post("/fleet", vehicle);
+    return res.data;
   },
-  async update(id, data) {
-    try {
-      return (await axiosClient.patch(`/fleet/${id}`, data)).data;
-    } catch (e) {
-      handleApiError(e, "Failed to update vehicle");
-      throw e;
-    }
+
+  update: async (id, data) => {
+    const res = await axiosClient.patch(`/fleet/${id}`, data);
+    return res.data;
   },
-  async remove(id) {
-    try {
-      await axiosClient.delete(`/fleet/${id}`);
-    } catch (e) {
-      handleApiError(e, "Failed to remove vehicle");
-      throw e;
-    }
+
+  remove: async (id) => {
+    await axiosClient.delete(`/fleet/${id}`);
   },
 };
