@@ -6,11 +6,42 @@ import { formatUSD } from "../../utils/currency";
 const ShipmentDetailPage = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
+  const callCustomer = () => {
+    if (!order?.customer_phone) {
+      alert("Customer phone number is not available.");
+      return;
+    }
 
+    window.location.href = `tel:${order.customer_phone}`;
+  };
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState(false);
   const [error, setError] = useState("");
+
+  const submitFailure = async () => {
+    if (!failureReason.trim()) {
+      alert("Please select or enter a failure reason.");
+      return;
+    }
+
+    try {
+      setFailureSubmitting(true);
+
+      const updated = await shipperApi.failDelivery(order.id, failureReason);
+
+      setOrder(updated);
+
+      setShowFailureModal(false);
+      setFailureReason("");
+    } catch (err) {
+      console.error(err);
+
+      alert(err?.response?.data?.detail || "Failed to update delivery.");
+    } finally {
+      setFailureSubmitting(false);
+    }
+  };
 
   const loadOrder = async () => {
     try {
@@ -143,6 +174,22 @@ const ShipmentDetailPage = () => {
           <Info label="Phone" value={order.customer_phone || "Not available"} />
 
           <Info label="Email" value={order.customer_email || "Not available"} />
+          <button
+            onClick={callCustomer}
+            disabled={!order.customer_phone}
+            style={{
+              border: "none",
+              background: "#4f46e5",
+              color: "#fff",
+              padding: "11px 18px",
+              borderRadius: 10,
+              cursor: order.customer_phone ? "pointer" : "not-allowed",
+              fontWeight: 700,
+              opacity: order.customer_phone ? 1 : 0.5,
+            }}
+          >
+            📞 Call Customer
+          </button>
         </div>
       </section>
 
@@ -269,7 +316,7 @@ const ShipmentDetailPage = () => {
 
               <button
                 disabled={acting}
-                onClick={() => updateStatus("FAILED")}
+                onClick={() => setShowFailureModal(true)}
                 style={dangerButton}
               >
                 ✕ Delivery Failed
@@ -288,6 +335,158 @@ const ShipmentDetailPage = () => {
           )}
         </div>
       </section>
+      {showFailureModal && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0, 0, 0, 0.45)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+            padding: 20,
+          }}
+        >
+          <div
+            style={{
+              width: "100%",
+              maxWidth: 480,
+              background: "#fff",
+              borderRadius: 16,
+              padding: 24,
+              boxShadow: "0 20px 60px rgba(0,0,0,0.2)",
+            }}
+          >
+            <h2
+              style={{
+                marginTop: 0,
+                color: "#14162b",
+              }}
+            >
+              Delivery Failed
+            </h2>
+
+            <p
+              style={{
+                color: "#6b7280",
+                marginBottom: 20,
+              }}
+            >
+              Please provide a reason for the failed delivery.
+            </p>
+
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 10,
+              }}
+            >
+              {[
+                "Customer unavailable",
+                "Wrong address",
+                "Customer refused",
+                "Unable to contact customer",
+                "Package damaged",
+              ].map((reason) => (
+                <label
+                  key={reason}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    padding: 10,
+                    border: "1px solid #e5e7eb",
+                    borderRadius: 10,
+                    cursor: "pointer",
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="failureReason"
+                    value={reason}
+                    checked={failureReason === reason}
+                    onChange={(e) => setFailureReason(e.target.value)}
+                  />
+
+                  {reason}
+                </label>
+              ))}
+            </div>
+
+            <textarea
+              placeholder="Other reason..."
+              value={
+                [
+                  "Customer unavailable",
+                  "Wrong address",
+                  "Customer refused",
+                  "Unable to contact customer",
+                  "Package damaged",
+                ].includes(failureReason)
+                  ? ""
+                  : failureReason
+              }
+              onChange={(e) => setFailureReason(e.target.value)}
+              style={{
+                width: "100%",
+                minHeight: 90,
+                marginTop: 15,
+                padding: 12,
+                borderRadius: 10,
+                border: "1px solid #d1d5db",
+                resize: "vertical",
+                boxSizing: "border-box",
+              }}
+            />
+
+            <div
+              style={{
+                display: "flex",
+                gap: 10,
+                marginTop: 20,
+              }}
+            >
+              <button
+                onClick={() => {
+                  setShowFailureModal(false);
+                  setFailureReason("");
+                }}
+                disabled={failureSubmitting}
+                style={{
+                  flex: 1,
+                  padding: "11px 16px",
+                  borderRadius: 10,
+                  border: "1px solid #d1d5db",
+                  background: "#fff",
+                  cursor: "pointer",
+                }}
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={submitFailure}
+                disabled={failureSubmitting || !failureReason.trim()}
+                style={{
+                  flex: 1,
+                  padding: "11px 16px",
+                  borderRadius: 10,
+                  border: "none",
+                  background: "#dc2626",
+                  color: "#fff",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  opacity: failureSubmitting || !failureReason.trim() ? 0.5 : 1,
+                }}
+              >
+                {failureSubmitting ? "Saving..." : "Confirm Failed Delivery"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -295,6 +494,11 @@ const ShipmentDetailPage = () => {
 /* =========================
    COMPONENTS
 ========================= */
+const [showFailureModal, setShowFailureModal] = useState(false);
+
+const [failureReason, setFailureReason] = useState("");
+
+const [failureSubmitting, setFailureSubmitting] = useState(false);
 
 const Info = ({ label, value }) => (
   <div>

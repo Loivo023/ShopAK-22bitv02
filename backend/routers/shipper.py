@@ -7,6 +7,8 @@ from database import get_db
 from models.order import OrderDB
 from schemas.order import OrderRead, OrderItemRead, ShipperStatusUpdate
 from auth.deps import require_shipper
+from datetime import datetime
+from schemas.shipper import DeliveryFailureRequest
 
 router = APIRouter(prefix="/shipper", tags=["shipper"])
 
@@ -20,6 +22,7 @@ def _to_order_read(order: OrderDB) -> OrderRead:
         shipper_id=order.shipper_id, carrier=order.carrier,
         tracking_number=order.tracking_number,
         shipped_at=str(order.shipped_at) if order.shipped_at else None,
+        delivery_failure_reason=order.delivery_failure_reason,
         customer_name=order.user.full_name if order.user else None,
         customer_email=order.user.email if order.user else None,
         customer_phone=order.user.phone if order.user else None,
@@ -113,27 +116,106 @@ def get_delivery_detail(
     return _to_order_read(order)
 
 @router.patch("/{order_id}/status", response_model=OrderRead)
-def update_delivery_status(order_id: int, payload: ShipperStatusUpdate, db: Session = Depends(get_db), user=Depends(require_shipper)):
-    order = db.query(OrderDB).filter(OrderDB.id == order_id).first()
+def update_delivery_status(
+    order_id: int,
+    payload: ShipperStatusUpdate,
+    db: Session = Depends(get_db),
+    user=Depends(require_shipper),
+):
+    order = (
+        db.query(OrderDB)
+        .filter(OrderDB.id == order_id)
+        .first()
+    )
+
     if not order:
-        raise HTTPException(status_code=404, detail="Order not found")
+        raise HTTPException(
+            status_code=404,
+            detail="Order not found"
+        )
 
+    # Make sure shipper can only update
+    # their assigned order
     if user.role != "ADMIN" and order.shipper_id != user.id:
-        raise HTTPException(status_code=403, detail="You are not assigned to this order")
+        raise HTTPException(
+            status_code=403,
+            detail="You are not assigned to this order"
+        )
 
+    # Allowed status transitions
     valid_from_status = {
-        "SHIPPED":   {"PROCESSING"},
+        "SHIPPED": {"PROCESSING"},
         "COMPLETED": {"SHIPPED"},
-        "FAILED":    {"SHIPPED"},
+        "FAILED": {"SHIPPED"},
     }
-    if order.status not in valid_from_status.get(payload.status, set()):
-        raise HTTPException(status_code=400, detail=f"Cannot change status from {order.status} to {payload.status}.")
 
+    if order.status not in valid_from_status.get(
+        payload.status,
+        set()
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Cannot change status from "
+                f"{order.status} to {payload.status}."
+            ),
+        )
+
+    # Update status
     order.status = payload.status
+
+    # Record when delivery starts
     if payload.status == "SHIPPED":
-        from datetime import datetime
         order.shipped_at = datetime.utcnow()
 
     db.commit()
     db.refresh(order)
+
+    return _to_order_read(order)
+
+@router.patch(
+    "/{order_id}/failure",
+    response_model=OrderRead
+)
+def mark_delivery_failed(
+    order_id: int,
+    payload: DeliveryFailureRequest,
+    db: Session = Depends(get_db),
+    user=Depends(require_shipper),
+):
+    order = (
+        db.query(OrderDB)
+        .filter(OrderDB.id == order_id)
+        .first()
+    )
+
+    if not order:
+        raise HTTPException(
+            status_code=404,
+            detail="Order not found"
+        )
+
+    # Only assigned shipper can update
+    if user.role != "ADMIN" and order.shipper_id != user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="You are not assigned to this order"
+        )
+
+    # Delivery can only fail while out for delivery
+    if order.status != "SHIPPED":
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Cannot mark order as FAILED "
+                f"from {order.status}"
+            )
+        )
+
+    order.status = "FAILED"
+    order.delivery_failure_reason = payload.reason
+
+    db.commit()
+    db.refresh(order)
+
     return _to_order_read(order)

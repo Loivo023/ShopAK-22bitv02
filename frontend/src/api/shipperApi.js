@@ -22,6 +22,18 @@ export const shipperApi = {
     }
   },
 
+  async getDelivery(orderId) {
+    try {
+      const response = await axiosClient.get(`/shipper/${orderId}`);
+
+      return response.data;
+    } catch (error) {
+      handleApiError(error, "Failed to fetch delivery details");
+
+      throw error;
+    }
+  },
+
   async accept(orderId) {
     try {
       const response = await axiosClient.post(`/shipper/${orderId}/accept`);
@@ -44,13 +56,15 @@ export const shipperApi = {
     }
   },
 
-  async getDelivery(orderId) {
+  async failDelivery(orderId, reason) {
     try {
-      const response = await axiosClient.get(`/shipper/${orderId}`);
+      const response = await axiosClient.patch(`/shipper/${orderId}/failure`, {
+        reason,
+      });
 
       return response.data;
     } catch (error) {
-      handleApiError(error, "Failed to fetch delivery details");
+      handleApiError(error, "Failed to mark delivery as failed");
 
       throw error;
     }

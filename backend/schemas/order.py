@@ -58,6 +58,8 @@ class OrderRead(BaseModel):
     tracking_number: Optional[str] = None
     shipped_at: Optional[str] = None
 
+    delivery_failure_reason: Optional[str] = None
+
     # Customer information
     customer_name: Optional[str] = None
     customer_email: Optional[str] = None
