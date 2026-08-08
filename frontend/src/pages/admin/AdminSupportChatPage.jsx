@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { chatApi } from "../api/extrasApi";
+import { chatApi } from "../../api/extrasApi";
 
 const AdminSupportChatPage = ({ listType = "support" }) => {
   const [conversations, setConversations] = useState([]);

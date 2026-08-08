@@ -204,8 +204,6 @@ def update_delivery_status(
     # COMPLETED
     # ---------------------------------
     elif payload.status == "COMPLETED":
-
-        # Check whether this is a COD order
         cod_payment = (
             db.query(PaymentDB)
             .filter(
@@ -220,10 +218,7 @@ def update_delivery_status(
         if cod_payment and order.payment_status != "PAID":
             raise HTTPException(
                 status_code=400,
-                detail=(
-                    "COD payment must be collected "
-                    "before completing the delivery."
-                ),
+                detail="COD payment must be collected before completing the delivery.",
             )
 
         order.status = "COMPLETED"

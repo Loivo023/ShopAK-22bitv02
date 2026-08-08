@@ -5,10 +5,7 @@ from typing import List
 
 from database import get_db
 from models.order import OrderDB, OrderItemDB
-from schemas.order import (
-    CheckoutRequest, OrderRead, OrderItemRead, OrderSummary,
-    OrderStatusUpdate, OrderItemQuantityUpdate, ShipOrderRequest,
-)
+from schemas.order import (CheckoutRequest, OrderRead, OrderItemRead, OrderSummary, AdminOrderRead, OrderStatusUpdate, OrderItemQuantityUpdate, ShipOrderRequest,)
 from auth.deps import get_current_user, require_admin
 from services.shipping.factory import get_shipping_strategy
 
@@ -128,11 +125,34 @@ def get_my_orders(db: Session = Depends(get_db), user=Depends(get_current_user))
     ]
 
 
-@router.get("/admin/all", response_model=List[OrderSummary], dependencies=[Depends(require_admin)])
+@router.get(
+    "/admin/all",
+    response_model=List[AdminOrderRead],
+    dependencies=[Depends(require_admin)],
+)
 def get_all_orders_for_admin(db: Session = Depends(get_db)):
-    orders = db.query(OrderDB).order_by(desc(OrderDB.created_at)).all()
+    orders = (
+        db.query(OrderDB)
+        .order_by(desc(OrderDB.created_at))
+        .all()
+    )
+
     return [
-        OrderSummary(id=o.id, status=o.status, payment_status=o.payment_status, total_amount=o.total_amount, created_at=str(o.created_at))
+        AdminOrderRead(
+            id=o.id,
+            user_id=o.user_id,
+            status=o.status,
+            payment_status=o.payment_status,
+            total_amount=o.total_amount,
+            shipping_fee=o.shipping_fee,
+            shipping_provider=o.shipping_provider,
+            tracking_code=o.tracking_code,
+            shipper_id=o.shipper_id,
+            carrier=o.carrier,
+            tracking_number=o.tracking_number,
+            shipped_at=str(o.shipped_at) if o.shipped_at else None,
+            created_at=str(o.created_at),
+        )
         for o in orders
     ]
 

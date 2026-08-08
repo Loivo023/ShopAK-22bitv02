@@ -10,8 +10,8 @@ import {
   BarChart,
   Bar,
 } from "recharts";
-import { adminStatsApi } from "../api/adminStatsApi";
-import { formatUSD } from "../utils/currency";
+import { adminStatsApi } from "../../api/adminStatsApi";
+import { formatUSD } from "../../utils/currency";
 
 const RANGE_OPTIONS = [
   { label: "3M", months: 3 },

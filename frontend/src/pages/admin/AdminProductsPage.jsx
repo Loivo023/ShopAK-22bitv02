@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { productsApi } from "../api/productsApi";
+import { productsApi } from "../../api/productsApi";
 
 const AdminProductsPage = () => {
   const [products, setProducts] = useState([]);

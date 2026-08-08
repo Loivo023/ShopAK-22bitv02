@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { adminStatsApi } from "../api/adminStatsApi";
-import axiosClient from "../api/axiosClient";
-import { formatUSD } from "../utils/currency";
+import { adminStatsApi } from "../../api/adminStatsApi";
+import axiosClient from "../../api/axiosClient";
+import { formatUSD } from "../../utils/currency";
 
 const Icon = ({ path, size = 20, color = "currentColor" }) => (
   <svg

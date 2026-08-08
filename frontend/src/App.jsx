@@ -11,11 +11,11 @@ import RegisterPage from "./pages/RegisterPage";
 import OrderHistoryPage from "./pages/OrderHistoryPage";
 import OrderDetailPage from "./pages/OrderDetailPage";
 import OrderPaymentPage from "./pages/OrderPaymentPage";
-import AdminOrdersPage from "./pages/AdminOrdersPage";
-import AdminDashboardPage from "./pages/AdminDashboardPage";
-import AdminProductsPage from "./pages/AdminProductsPage";
+import AdminOrdersPage from "./pages/admin/AdminOrdersPage";
+import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
+import AdminProductsPage from "./pages/admin/AdminProductsPage";
 import ProductEditPage from "./pages/ProductEditPage";
-import AdminUsersPage from "./pages/AdminUsersPage";
+import AdminUsersPage from "./pages/admin/AdminUsersPage";
 import StripeSuccess from "./pages/payment/StripeSuccess";
 import StripeCancel from "./pages/payment/StripeCancel";
 import PaypalSuccess from "./pages/payment/PaypalSuccess";
@@ -34,13 +34,13 @@ import FleetPage from "./pages/shipper/FleetPage";
 import InventoryPage from "./pages/shipper/InventoryPage";
 import ReportsPage from "./pages/shipper/ReportsPage";
 import BillingPage from "./pages/shipper/BillingPage";
-import AdminShippersPage from "./pages/AdminShippersPage";
+import AdminShippersPage from "./pages/admin/AdminShippersPage";
 import ShipperRoute from "./routes/ShipperRoute";
 import OrdersPageShipper from "./pages/shipper/OrdersPage";
 import DriversPage from "./pages/shipper/DriversPage";
-import AdminAnalyticsPage from "./pages/AdminAnalyticsPage";
+import AdminAnalyticsPage from "./pages/admin/AdminAnalyticsPage";
 import ChatWidget from "./Components/ChatWidget";
-import AdminSupportChatPage from "./pages/AdminSupportChatPage";
+import AdminSupportChatPage from "./pages/admin/AdminSupportChatPage";
 import WishlistPage from "./pages/WishlistPage";
 import ProfilePage from "./pages/ProfilePage";
 
@@ -101,6 +101,10 @@ const App = () => {
           <Route path="/shipper/shipments" element={<ShipmentsPage />} />
           <Route
             path="/shipper/shipments/:orderId"
+            element={<ShipmentDetailPage />}
+          />
+          <Route
+            path="/shipper/orders/:orderId"
             element={<ShipmentDetailPage />}
           />
           <Route path="/shipper/fleet" element={<FleetPage />} />

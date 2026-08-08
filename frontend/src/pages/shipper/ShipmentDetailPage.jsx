@@ -1,11 +1,18 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { shipperApi } from "../../api/shipperApi";
 import { formatUSD } from "../../utils/currency";
 
 const ShipmentDetailPage = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const fromOrders = location.pathname.startsWith("/shipper/orders");
+
+  const backPath = fromOrders ? "/shipper/orders" : "/shipper/shipments";
+
+  const backLabel = fromOrders ? "← Back to Orders" : "← Back to Shipments";
 
   // =========================
   // STATE
@@ -236,14 +243,14 @@ const ShipmentDetailPage = () => {
       >
         <div>
           <Link
-            to="/shipper/shipments"
+            to={backPath}
             style={{
               textDecoration: "none",
               color: "#4f46e5",
               fontSize: 13,
             }}
           >
-            ← Back to Shipments
+            {backLabel}
           </Link>
 
           <h1

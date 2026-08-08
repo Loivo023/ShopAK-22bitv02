@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { usersApi } from "../api/usersApi";
-import { useAuth } from "../auth/useAuth";
+import { usersApi } from "../../api/usersApi";
+import { useAuth } from "../../auth/useAuth";
 
 const ROLE_META = {
   ADMIN: { label: "Admin", color: "#7c3aed", bg: "#f3e8ff" },

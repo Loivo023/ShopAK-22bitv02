@@ -73,6 +73,20 @@ class OrderRead(BaseModel):
     class Config:
         from_attributes = True
 
+class AdminOrderRead(BaseModel):
+    id: int
+    user_id: int
+    status: str
+    payment_status: str
+    total_amount: float
+    shipping_fee: float
+    shipping_provider: str | None = None
+    tracking_code: str | None = None
+    shipper_id: int | None = None
+    carrier: str | None = None
+    tracking_number: str | None = None
+    shipped_at: str | None = None
+    created_at: str
 
 class OrderSummary(BaseModel):
     id:             int
