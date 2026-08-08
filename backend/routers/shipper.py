@@ -170,33 +170,31 @@ def update_delivery_status(
             ),
         )
 
-    if payload.status == "COMPLETED": cod_payment = (
-        db.query(PaymentDB)
-        .filter(
-            PaymentDB.order_id == order.id,
-            PaymentDB.provider == "cod",
-        )
-        .order_by(PaymentDB.id.desc())
-        .first()
-    )
-
-    if cod_payment and order.payment_status != "PAID":
-        raise HTTPException(
-            status_code=400,
-            detail="COD payment must be collected before completing the delivery."
-        )
-
     # Update status
     order.status = payload.status
 
     # Record when delivery starts
-    if payload.status == "SHIPPED":
-        from datetime import datetime
+    if payload.status == "SHIPPED": 
         order.shipped_at = datetime.utcnow()
 
+    # Complete delivery
     if payload.status == "COMPLETED":
-        from datetime import datetime
-        order.delivered_at = datetime.utcnow()
+        cod_payment = (
+            db.query(PaymentDB).filter(
+                PaymentDB.order_id == order.id,
+                PaymentDB.provider == "cod",
+            )
+            .order_by(PaymentDB.id.desc())
+            .first()
+        )
+
+    if cod_payment and order.payment_status != "PAID":
+        raise HTTPException(
+            status_code=400,
+            detail="COD payment must be collected before completing the delivery.",
+        )
+
+    order.delivered_at = datetime.utcnow()
 
     db.commit()
     db.refresh(order)
