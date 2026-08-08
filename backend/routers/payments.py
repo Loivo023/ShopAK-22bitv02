@@ -30,6 +30,77 @@ def _get_order_for_payment(order_id: int, db: Session, user) -> OrderDB:
         raise HTTPException(status_code=400, detail="Order already paid")
     return order
 
+# ─────────────────────────────────────────────
+# COD
+# ─────────────────────────────────────────────
+
+@router.post("/cod/create")
+def create_cod_payment(
+    payload: CreateSessionRequest,
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    order = _get_order_for_payment(
+        payload.order_id,
+        db,
+        user,
+    )
+
+    # ---------------------------------
+    # Prevent duplicate COD payment
+    # ---------------------------------
+
+    existing = (
+        db.query(PaymentDB)
+        .filter(
+            PaymentDB.order_id == order.id,
+            PaymentDB.provider == "cod",
+        )
+        .order_by(PaymentDB.id.desc())
+        .first()
+    )
+
+    if existing:
+        return {
+            "message": "COD payment already exists",
+            "order_id": order.id,
+            "payment_id": existing.id,
+            "status": existing.status,
+            "amount": existing.amount,
+        }
+
+    # ---------------------------------
+    # Create COD payment
+    # ---------------------------------
+
+    payment = PaymentDB(
+        order_id=order.id,
+        provider="cod",
+        amount=order.total_amount,
+        currency="USD",
+        status="PENDING",
+        provider_session_id=f"COD-PENDING-{order.id}",
+    )
+
+    db.add(payment)
+
+    # COD does not mean paid yet.
+    # Customer pays when receiving the order.
+
+    order.payment_status = "PENDING"
+
+    db.commit()
+    db.refresh(payment)
+
+    return {
+        "message": "COD payment created",
+        "order_id": order.id,
+        "payment_id": payment.id,
+        "provider": payment.provider,
+        "amount": payment.amount,
+        "currency": payment.currency,
+        "status": payment.status,
+    }
 
 # ─────────────────────────────────────────────
 # STRIPE

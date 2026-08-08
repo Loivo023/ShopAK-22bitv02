@@ -1,17 +1,20 @@
+from datetime import datetime
+
 from fastapi import (APIRouter, Depends, HTTPException, UploadFile, File,)
 from sqlalchemy.orm import Session
+
+from database import get_db
+from models.order import OrderDB
+from models.payment import PaymentDB
+from schemas.shipper import (DeliveryFailureRequest, ShipperStatusUpdate, CodCollectRequest, CodCollectResponse,)
+from schemas.order import OrderRead, OrderItemRead, ShipperStatusUpdate
+from auth.deps import require_shipper
 from sqlalchemy import desc
 from typing import List
 
 import os
 import uuid
-from datetime import datetime
 
-from database import get_db
-from models.order import OrderDB
-from schemas.order import OrderRead, OrderItemRead, ShipperStatusUpdate
-from schemas.shipper import DeliveryFailureRequest
-from auth.deps import require_shipper
 
 router = APIRouter(prefix="/shipper", tags=["shipper"])
 
@@ -182,6 +185,141 @@ def update_delivery_status(
     db.refresh(order)
 
     return _to_order_read(order)
+
+@router.post(
+    "/{order_id}/cod/collect",
+    response_model=CodCollectResponse,
+)
+def collect_cod_payment(
+    order_id: int,
+    payload: CodCollectRequest,
+    db: Session = Depends(get_db),
+    user=Depends(require_shipper),
+):
+    # ---------------------------------
+    # Find order
+    # ---------------------------------
+
+    order = (
+        db.query(OrderDB)
+        .filter(OrderDB.id == order_id)
+        .first()
+    )
+
+    if not order:
+        raise HTTPException(
+            status_code=404,
+            detail="Order not found",
+        )
+
+    # ---------------------------------
+    # Check shipper assignment
+    # ---------------------------------
+
+    if user.role != "ADMIN" and order.shipper_id != user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="You are not assigned to this order",
+        )
+
+    # ---------------------------------
+    # COD must be collected during
+    # the delivery stage
+    # ---------------------------------
+
+    if order.status != "SHIPPED":
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "COD can only be collected when "
+                "the order is out for delivery."
+            ),
+        )
+
+    # ---------------------------------
+    # Find COD payment
+    # ---------------------------------
+
+    payment = (
+        db.query(PaymentDB)
+        .filter(
+            PaymentDB.order_id == order.id,
+            PaymentDB.provider == "cod",
+        )
+        .order_by(PaymentDB.id.desc())
+        .first()
+    )
+
+    if not payment:
+        raise HTTPException(
+            status_code=400,
+            detail="This order is not a COD order.",
+        )
+
+    # ---------------------------------
+    # Already collected
+    # ---------------------------------
+
+    if (
+        order.payment_status == "PAID"
+        or payment.status == "SUCCEEDED"
+    ):
+        return CodCollectResponse(
+            message="COD payment has already been collected.",
+            order_id=order.id,
+            amount_collected=payment.amount,
+            payment_status=order.payment_status,
+            order_status=order.status,
+        )
+
+    # ---------------------------------
+    # Validate collected amount
+    # ---------------------------------
+
+    expected_amount = float(payment.amount)
+    received_amount = float(payload.amount_received)
+
+    if abs(received_amount - expected_amount) > 0.01:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Incorrect COD amount. "
+                f"Expected {expected_amount:.2f}."
+            ),
+        )
+
+    # ---------------------------------
+    # Mark payment as collected
+    # ---------------------------------
+
+    payment.status = "SUCCEEDED"
+
+    # Store the actual collected amount
+    payment.amount = received_amount
+
+    # Create a simple COD reference
+    payment.provider_session_id = (
+        f"COD-{order.id}-"
+        f"{int(datetime.utcnow().timestamp())}"
+    )
+
+    # ---------------------------------
+    # Update order payment status
+    # ---------------------------------
+
+    order.payment_status = "PAID"
+
+    db.commit()
+    db.refresh(order)
+    db.refresh(payment)
+
+    return CodCollectResponse(
+        message="COD payment collected successfully.",
+        order_id=order.id,
+        amount_collected=received_amount,
+        payment_status=order.payment_status,
+        order_status=order.status,
+    )
 
 @router.patch(
     "/{order_id}/failure",

@@ -56,6 +56,15 @@ export const shipperApi = {
     }
   },
 
+  collectCOD: async (orderId, amountReceived, note = "") => {
+    const response = await api.post(`/shipper/${orderId}/cod/collect`, {
+      amount_received: amountReceived,
+      note,
+    });
+
+    return response.data;
+  },
+
   async failDelivery(orderId, reason) {
     try {
       const response = await axiosClient.patch(`/shipper/${orderId}/failure`, {

@@ -13,6 +13,9 @@ const ShipmentDetailPage = () => {
 
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showCodModal, setShowCodModal] = useState(false);
+  const [codAmount, setCodAmount] = useState("");
+  const [codSubmitting, setCodSubmitting] = useState(false);
   const [acting, setActing] = useState(false);
   const [error, setError] = useState("");
 
@@ -178,6 +181,10 @@ const ShipmentDetailPage = () => {
     return <div style={{ padding: 32 }}>Shipment not found.</div>;
   }
 
+  // =========================
+  // JSX
+  // =========================
+
   return (
     <div
       style={{
@@ -224,6 +231,9 @@ const ShipmentDetailPage = () => {
             Shipment details
           </p>
         </div>
+
+        {/* COD modal */}
+        {showCodModal && <div>{/* modal content */}</div>}
 
         <StatusBadge status={order.status} />
       </div>
@@ -286,6 +296,9 @@ const ShipmentDetailPage = () => {
             }
           />
         </div>
+        {order.payment_status !== "PAID" && order.status === "SHIPPED" && (
+          <button onClick={() => setShowCodModal(true)}>💵 Collect COD</button>
+        )}
 
         <button
           onClick={openNavigation}
