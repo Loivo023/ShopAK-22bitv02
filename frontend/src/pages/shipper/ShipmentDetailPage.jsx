@@ -6,6 +6,28 @@ import { formatUSD } from "../../utils/currency";
 const ShipmentDetailPage = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
+
+  // =========================
+  // STATE
+  // =========================
+
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [acting, setActing] = useState(false);
+  const [error, setError] = useState("");
+
+  const [proofUploading, setProofUploading] = useState(false);
+
+  const [showFailureModal, setShowFailureModal] = useState(false);
+
+  const [failureReason, setFailureReason] = useState("");
+
+  const [failureSubmitting, setFailureSubmitting] = useState(false);
+
+  // =========================
+  // CUSTOMER
+  // =========================
+
   const callCustomer = () => {
     if (!order?.customer_phone) {
       alert("Customer phone number is not available.");
@@ -14,11 +36,57 @@ const ShipmentDetailPage = () => {
 
     window.location.href = `tel:${order.customer_phone}`;
   };
-  const [order, setOrder] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [acting, setActing] = useState(false);
-  const [error, setError] = useState("");
-  const [proofUploading, setProofUploading] = useState(false);
+
+  // =========================
+  // LOAD ORDER
+  // =========================
+
+  const loadOrder = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const data = await shipperApi.getDelivery(orderId);
+
+      setOrder(data);
+    } catch (err) {
+      console.error(err);
+
+      setError(err?.response?.data?.detail || "Failed to load shipment.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadOrder();
+  }, [orderId]);
+
+  // =========================
+  // UPDATE STATUS
+  // =========================
+
+  const updateStatus = async (status) => {
+    if (!order) return;
+
+    try {
+      setActing(true);
+
+      const updated = await shipperApi.updateStatus(order.id, status);
+
+      setOrder(updated);
+    } catch (err) {
+      console.error(err);
+
+      alert(err?.response?.data?.detail || "Failed to update shipment.");
+    } finally {
+      setActing(false);
+    }
+  };
+
+  // =========================
+  // FAILURE
+  // =========================
 
   const submitFailure = async () => {
     if (!failureReason.trim()) {
@@ -44,44 +112,9 @@ const ShipmentDetailPage = () => {
     }
   };
 
-  const loadOrder = async () => {
-    try {
-      setLoading(true);
-      setError("");
-
-      const data = await shipperApi.getDelivery(orderId);
-
-      setOrder(data);
-    } catch (err) {
-      console.error(err);
-
-      setError(err?.response?.data?.detail || "Failed to load shipment.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadOrder();
-  }, [orderId]);
-
-  const updateStatus = async (status) => {
-    if (!order) return;
-
-    try {
-      setActing(true);
-
-      const updated = await shipperApi.updateStatus(order.id, status);
-
-      setOrder(updated);
-    } catch (err) {
-      console.error(err);
-
-      alert(err?.response?.data?.detail || "Failed to update shipment.");
-    } finally {
-      setActing(false);
-    }
-  };
+  // =========================
+  // NAVIGATION
+  // =========================
 
   const openNavigation = () => {
     if (!order?.shipping_address) return;
@@ -94,25 +127,9 @@ const ShipmentDetailPage = () => {
     );
   };
 
-  if (loading) {
-    return <div style={{ padding: 32 }}>Loading shipment...</div>;
-  }
-
-  if (error) {
-    return (
-      <div style={{ padding: 32 }}>
-        <h2>Unable to load shipment</h2>
-
-        <p>{error}</p>
-
-        <button onClick={() => navigate(-1)}>Go Back</button>
-      </div>
-    );
-  }
-
-  if (!order) {
-    return <div style={{ padding: 32 }}>Shipment not found.</div>;
-  }
+  // =========================
+  // PROOF OF DELIVERY
+  // =========================
 
   const uploadProof = async (event) => {
     const file = event.target.files?.[0];
@@ -133,10 +150,33 @@ const ShipmentDetailPage = () => {
       alert(err?.response?.data?.detail || "Failed to upload proof.");
     } finally {
       setProofUploading(false);
-
       event.target.value = "";
     }
   };
+
+  // =========================
+  // LOADING
+  // =========================
+
+  if (loading) {
+    return <div style={{ padding: 32 }}>Loading shipment...</div>;
+  }
+
+  if (error) {
+    return (
+      <div style={{ padding: 32 }}>
+        <h2>Unable to load shipment</h2>
+
+        <p>{error}</p>
+
+        <button onClick={() => navigate(-1)}>Go Back</button>
+      </div>
+    );
+  }
+
+  if (!order) {
+    return <div style={{ padding: 32 }}>Shipment not found.</div>;
+  }
 
   return (
     <div
@@ -585,11 +625,6 @@ const ShipmentDetailPage = () => {
 /* =========================
    COMPONENTS
 ========================= */
-const [showFailureModal, setShowFailureModal] = useState(false);
-
-const [failureReason, setFailureReason] = useState("");
-
-const [failureSubmitting, setFailureSubmitting] = useState(false);
 
 const Info = ({ label, value }) => (
   <div>
