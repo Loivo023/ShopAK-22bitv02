@@ -18,6 +18,7 @@ const ShipmentDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState(false);
   const [error, setError] = useState("");
+  const [proofUploading, setProofUploading] = useState(false);
 
   const submitFailure = async () => {
     if (!failureReason.trim()) {
@@ -112,6 +113,30 @@ const ShipmentDetailPage = () => {
   if (!order) {
     return <div style={{ padding: 32 }}>Shipment not found.</div>;
   }
+
+  const uploadProof = async (event) => {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    try {
+      setProofUploading(true);
+
+      const updated = await shipperApi.uploadProof(order.id, file);
+
+      setOrder(updated);
+
+      alert("Delivery proof uploaded successfully.");
+    } catch (err) {
+      console.error(err);
+
+      alert(err?.response?.data?.detail || "Failed to upload proof.");
+    } finally {
+      setProofUploading(false);
+
+      event.target.value = "";
+    }
+  };
 
   return (
     <div
@@ -286,6 +311,72 @@ const ShipmentDetailPage = () => {
 
       <section style={cardStyle}>
         <h2 style={sectionTitle}>Delivery Actions</h2>
+
+        {(order.status === "SHIPPED" || order.status === "COMPLETED") && (
+          <label
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "11px 18px",
+              borderRadius: 10,
+              background: "#111827",
+              color: "#fff",
+              fontWeight: 700,
+              cursor: proofUploading ? "not-allowed" : "pointer",
+              opacity: proofUploading ? 0.6 : 1,
+            }}
+          >
+            📷{" "}
+            {proofUploading
+              ? "Uploading..."
+              : order.delivery_proof_url
+                ? "Replace Proof"
+                : "Upload Proof"}
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={uploadProof}
+              disabled={proofUploading}
+              style={{ display: "none" }}
+            />
+          </label>
+        )}
+
+        {order.delivery_proof_url && (
+          <section style={cardStyle}>
+            <h2 style={sectionTitle}>Delivery Proof</h2>
+
+            <img
+              src={
+                order.delivery_proof_url.startsWith("http")
+                  ? order.delivery_proof_url
+                  : `${import.meta.env.VITE_API_URL}${order.delivery_proof_url}`
+              }
+              alt={`Delivery proof for Order #${order.id}`}
+              style={{
+                width: "100%",
+                maxWidth: 500,
+                maxHeight: 500,
+                objectFit: "contain",
+                borderRadius: 12,
+                border: "1px solid #e5e7eb",
+              }}
+            />
+
+            {order.delivered_at && (
+              <p
+                style={{
+                  color: "#6b7280",
+                  fontSize: 13,
+                  marginTop: 10,
+                }}
+              >
+                Delivered at: {order.delivered_at}
+              </p>
+            )}
+          </section>
+        )}
 
         <div
           style={{

@@ -69,4 +69,23 @@ export const shipperApi = {
       throw error;
     }
   },
+
+  async uploadProof(orderId, file) {
+    try {
+      const formData = new FormData();
+
+      formData.append("file", file);
+
+      const response = await axiosClient.post(
+        `/shipper/${orderId}/proof`,
+        formData,
+      );
+
+      return response.data;
+    } catch (error) {
+      handleApiError(error, "Failed to upload delivery proof");
+
+      throw error;
+    }
+  },
 };

@@ -20,6 +20,8 @@ class OrderDB(Base):
     tracking_number    = Column(String(100), nullable=True)
     shipped_at          = Column(DateTime(timezone=True), nullable=True)
     delivery_failure_reason = Column(String(255), nullable=True)
+    delivery_proof_url  = Column(String(500), nullable=True)
+    delivered_at        = Column(DateTime(timezone=True), nullable=True)
     created_at          = Column(DateTime(timezone=True), server_default=func.now())
 
     user    = relationship("UserDB", foreign_keys=[user_id], backref="orders")

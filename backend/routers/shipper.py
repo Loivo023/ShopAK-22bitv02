@@ -1,14 +1,17 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import (APIRouter, Depends, HTTPException, UploadFile, File,)
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 from typing import List
 
+import os
+import uuid
+from datetime import datetime
+
 from database import get_db
 from models.order import OrderDB
 from schemas.order import OrderRead, OrderItemRead, ShipperStatusUpdate
-from auth.deps import require_shipper
-from datetime import datetime
 from schemas.shipper import DeliveryFailureRequest
+from auth.deps import require_shipper
 
 router = APIRouter(prefix="/shipper", tags=["shipper"])
 
@@ -23,6 +26,8 @@ def _to_order_read(order: OrderDB) -> OrderRead:
         tracking_number=order.tracking_number,
         shipped_at=str(order.shipped_at) if order.shipped_at else None,
         delivery_failure_reason=order.delivery_failure_reason,
+        delivery_proof_url=order.delivery_proof_url,
+        delivered_at=(str(order.delivered_at) if order.delivered_at else None),
         customer_name=order.user.full_name if order.user else None,
         customer_email=order.user.email if order.user else None,
         customer_phone=order.user.phone if order.user else None,
@@ -166,7 +171,12 @@ def update_delivery_status(
 
     # Record when delivery starts
     if payload.status == "SHIPPED":
+        from datetime import datetime
         order.shipped_at = datetime.utcnow()
+
+    if payload.status == "COMPLETED":
+        from datetime import datetime
+        order.delivered_at = datetime.utcnow()
 
     db.commit()
     db.refresh(order)
@@ -214,6 +224,92 @@ def mark_delivery_failed(
 
     order.status = "FAILED"
     order.delivery_failure_reason = payload.reason
+
+    db.commit()
+    db.refresh(order)
+
+    return _to_order_read(order)
+
+@router.post(
+    "/{order_id}/proof",
+    response_model=OrderRead
+)
+async def upload_delivery_proof(
+    order_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    user=Depends(require_shipper),
+):
+    order = (
+        db.query(OrderDB)
+        .filter(OrderDB.id == order_id)
+        .first()
+    )
+
+    if not order:
+        raise HTTPException(
+            status_code=404,
+            detail="Order not found"
+        )
+
+    if user.role != "ADMIN" and order.shipper_id != user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="You are not assigned to this order"
+        )
+
+    if order.status not in {"SHIPPED", "COMPLETED"}:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Delivery proof can only be uploaded "
+                "while the order is SHIPPED or COMPLETED."
+            )
+        )
+
+    allowed_types = {
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+    }
+
+    if file.content_type not in allowed_types:
+        raise HTTPException(
+            status_code=400,
+            detail="Only JPG, PNG, and WEBP images are allowed."
+        )
+
+    contents = await file.read()
+
+    # 5 MB maximum
+    if len(contents) > 5 * 1024 * 1024:
+        raise HTTPException(
+            status_code=400,
+            detail="Image must be smaller than 5 MB."
+        )
+
+    extension = {
+        "image/jpeg": ".jpg",
+        "image/png": ".png",
+        "image/webp": ".webp",
+    }[file.content_type]
+
+    filename = (
+        f"delivery_proof_{order_id}_"
+        f"{uuid.uuid4().hex}{extension}"
+    )
+
+    os.makedirs("data_images", exist_ok=True)
+
+    file_path = os.path.join(
+        "data_images",
+        filename
+    )
+
+    with open(file_path, "wb") as buffer:
+        buffer.write(contents)
+
+    order.delivery_proof_url = f"/images/{filename}"
 
     db.commit()
     db.refresh(order)

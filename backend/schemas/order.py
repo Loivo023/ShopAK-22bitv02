@@ -59,6 +59,8 @@ class OrderRead(BaseModel):
     shipped_at: Optional[str] = None
 
     delivery_failure_reason: Optional[str] = None
+    delivery_proof_url: Optional[str] = None
+    delivered_at: Optional[str] = None
 
     # Customer information
     customer_name: Optional[str] = None
