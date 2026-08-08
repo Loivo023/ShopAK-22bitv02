@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { shipperApi } from "../../api/shipperApi";
+import { formatUSD, formatVND } from "../../utils/currency";
 
 const STATUS = {
   PROCESSING: {
@@ -22,14 +23,6 @@ const STATUS = {
     color: "#dc2626",
     background: "#fef2f2",
   },
-};
-
-const formatMoney = (value) => {
-  return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-    maximumFractionDigits: 0,
-  }).format(value || 0);
 };
 
 const DashboardPage = () => {
@@ -300,9 +293,15 @@ const DashboardPage = () => {
             <div>
               <p style={styles.codLabel}>Completed Order Value</p>
 
-              <h2 style={styles.codValue}>
-                {formatMoney(statistics.totalCod)}
-              </h2>
+              <div style={styles.codValueGroup}>
+                <h2 style={styles.codValue}>
+                  {formatUSD(statistics.totalCod)}
+                </h2>
+
+                <p style={styles.codVndValue}>
+                  {formatVND(statistics.totalCod)}
+                </p>
+              </div>
             </div>
           </div>
 
@@ -352,7 +351,14 @@ const DashboardPage = () => {
                       {order.shipping_address || "No address"}
                     </td>
 
-                    <td style={styles.td}>{formatMoney(order.total_amount)}</td>
+                    <td style={styles.td}>
+                      <div>
+                        <strong>{formatUSD(order.total_amount)}</strong>
+                        <div style={styles.secondaryMoney}>
+                          {formatVND(order.total_amount)}
+                        </div>
+                      </div>
+                    </td>
 
                     <td style={styles.td}>
                       <StatusBadge status={order.status} />
@@ -426,8 +432,7 @@ const OrderRow = ({ order }) => {
         </p>
 
         <div style={styles.orderBottom}>
-          <span>{formatMoney(order.total_amount)}</span>
-
+          <span>{formatUSD(order.total_amount)}</span>styles
           <span>{order.items?.length || 0} item(s)</span>
         </div>
       </div>
@@ -797,6 +802,25 @@ const styles = {
     margin: "4px 0 0",
     color: "#14162b",
     fontSize: "22px",
+  },
+
+  codValueGroup: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "2px",
+  },
+
+  codVndValue: {
+    margin: 0,
+    color: "#8b8fa3",
+    fontSize: "13px",
+    fontWeight: 600,
+  },
+
+  secondaryMoney: {
+    marginTop: "3px",
+    color: "#8b8fa3",
+    fontSize: "11px",
   },
 
   codDescription: {

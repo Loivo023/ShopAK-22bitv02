@@ -24,7 +24,7 @@ def get_overview(db: Session = Depends(get_db)):
 
     total_revenue = (
         db.query(func.sum(OrderDB.total_amount))
-        .filter(OrderDB.status == "PAID")
+        .filter(OrderDB.payment_status == "PAID")
         .scalar()
     ) or 0.0
 
@@ -62,7 +62,7 @@ def get_monthly_revenue(
         extract("year", OrderDB.created_at).label("year"),
         extract("month", OrderDB.created_at).label("month"),
         func.sum(OrderDB.total_amount).label("revenue"),
-    ).filter(OrderDB.status == "PAID")
+    ).filter(OrderDB.payment_status == "PAID")
 
     if from_date:
         query = query.filter(OrderDB.created_at >= from_date)
@@ -96,7 +96,7 @@ def get_top_products(db: Session = Depends(get_db), limit: int = Query(5, ge=1, 
             func.sum(OrderItemDB.line_total).label("total_revenue"),
         )
         .join(OrderDB, OrderDB.id == OrderItemDB.order_id)
-        .filter(OrderDB.status == "PAID")
+        .filter(OrderDB.payment_status == "PAID")
         .group_by(OrderItemDB.product_id, OrderItemDB.product_name)
         .order_by(desc("total_revenue"))
         .limit(limit)

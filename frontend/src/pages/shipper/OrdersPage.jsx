@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import axiosClient from "../../api/axiosClient";
+import { shipperApi } from "../../api/shipperApi";
 import { formatUSD } from "../../utils/currency";
 
 const STATUS_COLOR = {
@@ -18,9 +18,9 @@ const OrdersPage = () => {
   const [filter, setFilter] = useState("ALL");
 
   useEffect(() => {
-    axiosClient
-      .get("/orders/admin/all")
-      .then((res) => setOrders(res.data))
+    shipperApi
+      .getMyDeliveries()
+      .then((data) => setOrders(data))
       .catch(() => setOrders([]))
       .finally(() => setLoading(false));
   }, []);
@@ -42,7 +42,7 @@ const OrdersPage = () => {
           marginBottom: "20px",
         }}
       >
-        All Orders
+        My Order
       </h1>
 
       <div
@@ -125,7 +125,7 @@ const OrdersPage = () => {
                 {new Date(o.created_at).toLocaleDateString()}
               </p>
               <Link
-                to={`/admin/orders/${o.id}`}
+                to={`/shipper/orders/${o.id}`}
                 style={{
                   padding: "6px 16px",
                   backgroundColor: "#14162b",
