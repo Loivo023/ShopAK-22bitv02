@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../auth/useAuth";
 import { clearToken } from "../auth/token";

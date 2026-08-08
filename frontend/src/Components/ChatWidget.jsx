@@ -4,53 +4,103 @@ import { useAuth } from "../auth/useAuth";
 
 const ChatWidget = () => {
   const { user, role, isAuthenticated } = useAuth();
+
   const [open, setOpen] = useState(false);
-  const [tab, setTab] = useState("bot"); // "bot" | "support"
+  const [tab, setTab] = useState("bot");
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
+
   const bottomRef = useRef(null);
 
-  const channel = tab === "bot" ? `bot:${user?.id}` : `support:${user?.id}`;
+  const userId = user?.id;
+
+  const channel = tab === "bot" ? `bot:${userId}` : `support:${userId}`;
 
   const fetchMessages = async () => {
-    if (!isAuthenticated) return;
-    const data = await chatApi.getMessages(channel);
-    setMessages(data);
+    if (!isAuthenticated || !userId) {
+      return;
+    }
+
+    try {
+      setError("");
+
+      let data;
+
+      if (tab === "bot") {
+        data = await chatApi.getBotMessages(userId);
+      } else {
+        data = await chatApi.getMessages(channel);
+      }
+
+      setMessages(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Chat loading error:", err);
+      setMessages([]);
+      setError("Unable to load messages.");
+    }
   };
 
   useEffect(() => {
-    if (!open || !isAuthenticated) return;
+    if (!open || !isAuthenticated || !userId) {
+      return;
+    }
+
     fetchMessages();
-    const interval = setInterval(fetchMessages, 4000);
+
+    const interval = setInterval(() => {
+      fetchMessages();
+    }, 4000);
+
     return () => clearInterval(interval);
-  }, [open, tab, isAuthenticated]);
+  }, [open, tab, isAuthenticated, userId]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    bottomRef.current?.scrollIntoView({
+      behavior: "smooth",
+    });
   }, [messages]);
 
   const handleSend = async () => {
-    if (!input.trim()) return;
+    const text = input.trim();
+
+    if (!text || sending || !userId) {
+      return;
+    }
+
     setSending(true);
-    const text = input;
     setInput("");
+    setError("");
+
     try {
       if (tab === "bot") {
         await chatApi.sendToBot(channel, text);
       } else {
         await chatApi.sendMessage(channel, text);
       }
-      fetchMessages();
+
+      await fetchMessages();
+    } catch (err) {
+      console.error("Chat sending error:", err);
+
+      setError(err?.response?.data?.detail || "Unable to send your message.");
+
+      setInput(text);
     } finally {
       setSending(false);
     }
   };
 
-  if (!isAuthenticated || role === "ADMIN") return null;
+  // Don't show chatbot to unauthenticated users
+  // or administrators.
+  if (!isAuthenticated || role === "ADMIN") {
+    return null;
+  }
 
   return (
     <>
+      {/* Chat button */}
       <button
         onClick={() => setOpen((o) => !o)}
         style={{
@@ -72,6 +122,7 @@ const ChatWidget = () => {
         {open ? "✕" : "💬"}
       </button>
 
+      {/* Chat window */}
       {open && (
         <div
           style={{
@@ -90,21 +141,37 @@ const ChatWidget = () => {
             overflow: "hidden",
           }}
         >
-          <div style={{ display: "flex", borderBottom: "1px solid #ece6dc" }}>
+          {/* Tabs */}
+          <div
+            style={{
+              display: "flex",
+              borderBottom: "1px solid #ece6dc",
+            }}
+          >
             <button
-              onClick={() => setTab("bot")}
+              onClick={() => {
+                setTab("bot");
+                setMessages([]);
+                setError("");
+              }}
               style={tabStyle(tab === "bot")}
             >
               FAQ Bot
             </button>
+
             <button
-              onClick={() => setTab("support")}
+              onClick={() => {
+                setTab("support");
+                setMessages([]);
+                setError("");
+              }}
               style={tabStyle(tab === "support")}
             >
               Support
             </button>
           </div>
 
+          {/* Messages */}
           <div
             style={{
               flex: 1,
@@ -115,7 +182,22 @@ const ChatWidget = () => {
               gap: "8px",
             }}
           >
-            {messages.length === 0 && (
+            {error && (
+              <div
+                style={{
+                  padding: "8px 10px",
+                  borderRadius: "10px",
+                  backgroundColor: "#fff1f0",
+                  color: "#c0392b",
+                  fontSize: "0.75rem",
+                  textAlign: "center",
+                }}
+              >
+                {error}
+              </div>
+            )}
+
+            {messages.length === 0 && !error && (
               <p
                 style={{
                   textAlign: "center",
@@ -129,8 +211,10 @@ const ChatWidget = () => {
                   : "Send a message to our support team."}
               </p>
             )}
+
             {messages.map((m) => {
               const isMine = m.sender_id === user?.id && !m.is_bot;
+
               return (
                 <div
                   key={m.id}
@@ -147,6 +231,7 @@ const ChatWidget = () => {
                       fontSize: "0.82rem",
                       backgroundColor: isMine ? "#2b2825" : "#f0e4d8",
                       color: isMine ? "#fff" : "#2b2825",
+                      wordBreak: "break-word",
                     }}
                   >
                     {m.message}
@@ -154,9 +239,11 @@ const ChatWidget = () => {
                 </div>
               );
             })}
+
             <div ref={bottomRef} />
           </div>
 
+          {/* Input */}
           <div
             style={{
               display: "flex",
@@ -168,7 +255,12 @@ const ChatWidget = () => {
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSend()}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleSend();
+                }
+              }}
+              disabled={sending}
               placeholder="Type a message..."
               style={{
                 flex: 1,
@@ -176,22 +268,24 @@ const ChatWidget = () => {
                 borderRadius: "20px",
                 border: "1px solid #ece6dc",
                 fontSize: "0.82rem",
+                outline: "none",
               }}
             />
+
             <button
               onClick={handleSend}
-              disabled={sending}
+              disabled={sending || !input.trim()}
               style={{
                 padding: "9px 16px",
                 borderRadius: "20px",
                 border: "none",
-                backgroundColor: "#2b2825",
+                backgroundColor: sending || !input.trim() ? "#aaa" : "#2b2825",
                 color: "#fff",
-                cursor: "pointer",
+                cursor: sending || !input.trim() ? "not-allowed" : "pointer",
                 fontSize: "0.82rem",
               }}
             >
-              →
+              {sending ? "..." : "→"}
             </button>
           </div>
         </div>

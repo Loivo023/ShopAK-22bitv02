@@ -137,40 +137,84 @@ export const profileApi = {
 };
 
 export const chatApi = {
+  // ==========================================
+  // GET NORMAL CHAT MESSAGES
+  // ==========================================
   async getMessages(channel) {
     try {
       return (await axiosClient.get(`/chat/${channel}`)).data;
     } catch (e) {
+      console.error("Failed to load chat messages:", e);
       return [];
     }
   },
+
+  // ==========================================
+  // GET FAQ BOT MESSAGES
+  // ==========================================
+  async getBotMessages(userId) {
+    try {
+      return (await axiosClient.get(`/chat/bot/${userId}`)).data;
+    } catch (e) {
+      console.error("Failed to load bot messages:", e);
+      throw e;
+    }
+  },
+
+  // ==========================================
+  // SEND NORMAL CHAT MESSAGE
+  // ==========================================
   async sendMessage(channel, message) {
     try {
-      return (await axiosClient.post("/chat", { channel, message })).data;
+      return (
+        await axiosClient.post("/chat", {
+          channel,
+          message,
+        })
+      ).data;
     } catch (e) {
       handleApiError(e);
       throw e;
     }
   },
+
+  // ==========================================
+  // SEND MESSAGE TO FAQ BOT
+  // ==========================================
   async sendToBot(channel, message) {
     try {
-      return (await axiosClient.post("/chat/bot", { channel, message })).data;
+      return (
+        await axiosClient.post("/chat/bot", {
+          channel,
+          message,
+        })
+      ).data;
     } catch (e) {
       handleApiError(e);
       throw e;
     }
   },
+
+  // ==========================================
+  // ADMIN SUPPORT CONVERSATIONS
+  // ==========================================
   async getSupportList() {
     try {
       return (await axiosClient.get("/chat/admin/support-list")).data;
     } catch (e) {
+      console.error("Failed to load support list:", e);
       return [];
     }
   },
+
+  // ==========================================
+  // ADMIN SHIPPER CONVERSATIONS
+  // ==========================================
   async getShipperList() {
     try {
       return (await axiosClient.get("/chat/admin/shipper-list")).data;
     } catch (e) {
+      console.error("Failed to load shipper list:", e);
       return [];
     }
   },
