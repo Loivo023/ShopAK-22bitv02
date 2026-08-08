@@ -4,7 +4,6 @@ import ProductCard from "../Components/ProductCard";
 import { productsApi } from "../api/productsApi";
 import { useAuth } from "../auth/useAuth";
 import { recentlyViewedApi } from "../api/extrasApi";
-import { useAuth } from "../auth/useAuth";
 
 const HomePage = () => {
   const [bestsellers, setBestsellers] = useState([]);
