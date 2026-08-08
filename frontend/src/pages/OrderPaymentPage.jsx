@@ -41,6 +41,15 @@ const OrderPaymentPage = () => {
       } else if (method === "vnpay") {
         const { url } = await paymentsApi.createVnpayUrl(order.id);
         window.location.href = url;
+      } else if (method === "cod") {
+        await paymentsApi.createCOD(order.id);
+
+        // Reload the order so the UI has the new status
+        const updatedOrder = await ordersApi.getOrderById(order.id);
+
+        setOrder(updatedOrder);
+
+        setProcessing(false);
       }
     } catch (err) {
       const detail = err.response?.data?.detail;
@@ -80,7 +89,7 @@ const OrderPaymentPage = () => {
     );
   if (!order) return null;
 
-  if (order.status === "PAID") {
+  if (order.payment_status === "PAID") {
     return (
       <div
         style={{
@@ -128,9 +137,26 @@ const OrderPaymentPage = () => {
   }
 
   const methods = [
-    { value: "stripe", label: "Credit Card (Stripe)", icon: "💳" },
-    { value: "paypal", label: "PayPal", icon: "🅿️" },
-    { value: "vnpay", label: "VNPay", icon: "🏦" },
+    {
+      value: "stripe",
+      label: "Credit Card (Stripe)",
+      icon: "💳",
+    },
+    {
+      value: "paypal",
+      label: "PayPal",
+      icon: "🅿️",
+    },
+    {
+      value: "vnpay",
+      label: "VNPay",
+      icon: "🏦",
+    },
+    {
+      value: "cod",
+      label: "Cash on Delivery",
+      icon: "💵",
+    },
   ];
 
   return (
@@ -229,6 +255,24 @@ const OrderPaymentPage = () => {
           ))}
         </div>
 
+        {method === "cod" && (
+          <div
+            style={{
+              marginBottom: "18px",
+              padding: "14px 16px",
+              backgroundColor: "#f5ecd8",
+              borderRadius: "14px",
+              color: "#7a5a2f",
+              fontSize: "0.84rem",
+              lineHeight: "1.5",
+            }}
+          >
+            💵 <strong>Cash on Delivery</strong>
+            <br />
+            Pay the full amount to the shipper when your order is delivered.
+          </div>
+        )}
+
         {error && (
           <div
             style={{
@@ -260,7 +304,13 @@ const OrderPaymentPage = () => {
             opacity: processing ? 0.7 : 1,
           }}
         >
-          {processing ? "Redirecting..." : "Pay Now"}
+          {processing
+            ? method === "cod"
+              ? "Confirming COD..."
+              : "Redirecting..."
+            : method === "cod"
+              ? "Place COD Order"
+              : "Pay Now"}
         </button>
       </div>
     </div>

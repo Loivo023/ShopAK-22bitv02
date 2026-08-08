@@ -296,9 +296,6 @@ const ShipmentDetailPage = () => {
             }
           />
         </div>
-        {order.payment_status !== "PAID" && order.status === "SHIPPED" && (
-          <button onClick={() => setShowCodModal(true)}>💵 Collect COD</button>
-        )}
 
         <button
           onClick={openNavigation}
@@ -321,6 +318,12 @@ const ShipmentDetailPage = () => {
             label="Payment Status"
             value={order.payment_status || "UNKNOWN"}
           />
+
+          {order.payment_status !== "PAID" && order.status === "SHIPPED" && (
+            <button onClick={() => setShowCodModal(true)}>
+              💵 Collect COD
+            </button>
+          )}
         </div>
       </section>
 

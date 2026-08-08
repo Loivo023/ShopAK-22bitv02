@@ -54,6 +54,18 @@ export const paymentsApi = {
       throw error;
     }
   },
+  async createCOD(orderId) {
+    try {
+      const response = await axiosClient.post("/payments/cod/create", {
+        order_id: orderId,
+      });
+
+      return response.data;
+    } catch (error) {
+      handleApiError(error, "Failed to create COD order");
+      throw error;
+    }
+  },
 
   async confirm(orderId, provider) {
     try {

@@ -31,7 +31,7 @@ def _get_order_for_payment(order_id: int, db: Session, user) -> OrderDB:
     return order
 
 # ─────────────────────────────────────────────
-# COD
+# CASH ON DELIVERY
 # ─────────────────────────────────────────────
 
 @router.post("/cod/create")
@@ -40,38 +40,33 @@ def create_cod_payment(
     db: Session = Depends(get_db),
     user=Depends(get_current_user),
 ):
-    order = _get_order_for_payment(
-        payload.order_id,
-        db,
-        user,
-    )
+    order = _get_order_for_payment(payload.order_id, db, user)
 
-    # ---------------------------------
-    # Prevent duplicate COD payment
-    # ---------------------------------
+    # COD is only available before shipment
+    if order.status != "PLACED":
+        raise HTTPException(
+            status_code=400,
+            detail="COD can only be selected for a placed order."
+        )
 
-    existing = (
+    # Prevent duplicate COD payments
+    existing_payment = (
         db.query(PaymentDB)
         .filter(
             PaymentDB.order_id == order.id,
             PaymentDB.provider == "cod",
+            PaymentDB.status == "PENDING",
         )
-        .order_by(PaymentDB.id.desc())
         .first()
     )
 
-    if existing:
+    if existing_payment:
         return {
-            "message": "COD payment already exists",
+            "message": "COD payment already created",
             "order_id": order.id,
-            "payment_id": existing.id,
-            "status": existing.status,
-            "amount": existing.amount,
+            "payment_status": "PENDING",
+            "order_status": order.status,
         }
-
-    # ---------------------------------
-    # Create COD payment
-    # ---------------------------------
 
     payment = PaymentDB(
         order_id=order.id,
@@ -79,27 +74,24 @@ def create_cod_payment(
         amount=order.total_amount,
         currency="USD",
         status="PENDING",
-        provider_session_id=f"COD-PENDING-{order.id}",
+        provider_session_id=None,
     )
 
     db.add(payment)
 
-    # COD does not mean paid yet.
-    # Customer pays when receiving the order.
-
+    # COD does not require online payment.
+    # Move the order into processing so admin can assign a shipper.
+    order.status = "PROCESSING"
     order.payment_status = "PENDING"
 
     db.commit()
-    db.refresh(payment)
+    db.refresh(order)
 
     return {
-        "message": "COD payment created",
+        "message": "COD order created successfully",
         "order_id": order.id,
-        "payment_id": payment.id,
-        "provider": payment.provider,
-        "amount": payment.amount,
-        "currency": payment.currency,
-        "status": payment.status,
+        "payment_status": order.payment_status,
+        "order_status": order.status,
     }
 
 # ─────────────────────────────────────────────
