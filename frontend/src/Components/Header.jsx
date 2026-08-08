@@ -12,6 +12,7 @@ const Header = ({ title }) => {
     { label: "Home", to: "/" },
     { label: "Shop", to: "/products" },
     { label: "Bag", to: "/cart" },
+    ...(isAuthenticated ? [{ label: "Wishlist", to: "/wishlist" }] : []),
     ...(isAuthenticated
       ? [
           {
@@ -157,29 +158,30 @@ const Header = ({ title }) => {
         )}
         {isAuthenticated && (
           <>
-            <span
+            <Link
+              to="/profile"
               style={{
-                fontSize: "0.8rem",
-                color: "#a39c8f",
-                marginLeft: "10px",
-                paddingLeft: "14px",
-                borderLeft: "1px solid #ece6dc",
+                fontSize: "0.85rem",
+                color: "#888",
+                marginLeft: "4px",
+                paddingLeft: "12px",
+                borderLeft: "1px solid #eee",
+                textDecoration: "none",
               }}
             >
               {user?.full_name?.split(" ")[0] || user?.email}
-            </span>
+            </Link>
             <button
               onClick={handleLogout}
               style={{
-                padding: "8px 16px",
-                borderRadius: "30px",
-                border: "1px solid #ece6dc",
-                backgroundColor: "transparent",
-                color: "#8a8378",
-                fontSize: "0.82rem",
+                padding: "6px 16px",
+                borderRadius: "20px",
+                border: "1px solid #e53935",
+                backgroundColor: "#fff",
+                color: "#e53935",
+                fontSize: "0.9rem",
                 fontWeight: "500",
                 cursor: "pointer",
-                marginLeft: "4px",
               }}
             >
               Logout

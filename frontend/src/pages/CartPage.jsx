@@ -5,6 +5,7 @@ import { ordersApi } from "../api/ordersApi";
 import { shippingApi } from "../api/shippingApi";
 import { ghnApi } from "../api/ghnApi";
 import { formatUSD, formatVND } from "../utils/currency";
+import { voucherApi } from "../api/extrasApi";
 
 const inputStyle = {
   padding: "10px 14px",
@@ -31,6 +32,9 @@ const CartPage = () => {
   const [shippingProvider, setShippingProvider] = useState("IN_HOUSE");
   const [error, setError] = useState("");
   const [placingOrder, setPlacingOrder] = useState(false);
+  const [voucherCode, setVoucherCode] = useState("");
+  const [voucherResult, setVoucherResult] = useState(null);
+  const [checkingVoucher, setCheckingVoucher] = useState(false);
 
   // GHN specifics
   const [recipientName, setRecipientName] = useState("");
@@ -121,11 +125,30 @@ const CartPage = () => {
         );
         return;
       }
+      const discount = voucherResult?.valid ? voucherResult.discount_amount : 0;
+      const finalFee =
+        voucherResult?.valid && voucherResult.free_shipping ? 0 : effectiveFee;
       if (shippingFee === 0) {
         setError("Please calculate the shipping fee first.");
         return;
       }
     }
+
+    const handleApplyVoucher = async () => {
+      if (!voucherCode.trim()) return;
+      setCheckingVoucher(true);
+      try {
+        const result = await voucherApi.apply(
+          voucherCode.trim().toUpperCase(),
+          totalPrice,
+        );
+        setVoucherResult(result);
+      } catch (err) {
+        setVoucherResult({ valid: false, message: "Failed to apply voucher." });
+      } finally {
+        setCheckingVoucher(false);
+      }
+    };
 
     setPlacingOrder(true);
     setError("");
@@ -472,6 +495,57 @@ const CartPage = () => {
                   ? `Fee: ${shippingFee.toLocaleString()}₫ — Recalculate`
                   : "Calculate Shipping Fee"}
             </button>
+          </div>
+        )}
+      </div>
+
+      <div style={{ marginTop: "20px" }}>
+        <label
+          style={{
+            display: "block",
+            marginBottom: "8px",
+            fontSize: "0.85rem",
+            color: "#2b2825",
+            fontWeight: "500",
+          }}
+        >
+          Voucher Code
+        </label>
+        <div style={{ display: "flex", gap: "8px" }}>
+          <input
+            value={voucherCode}
+            onChange={(e) => setVoucherCode(e.target.value)}
+            placeholder="Enter code (e.g. WELCOME10)"
+            style={{ ...inputStyle, flex: 1 }}
+          />
+          <button
+            onClick={handleApplyVoucher}
+            disabled={checkingVoucher}
+            style={{
+              padding: "10px 20px",
+              borderRadius: "12px",
+              border: "1px solid #2b2825",
+              backgroundColor: "#fff",
+              color: "#2b2825",
+              cursor: "pointer",
+              fontSize: "0.84rem",
+            }}
+          >
+            {checkingVoucher ? "..." : "Apply"}
+          </button>
+        </div>
+        {voucherResult?.valid && (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              fontSize: "0.85rem",
+              color: "#5a7d5a",
+              marginBottom: "6px",
+            }}
+          >
+            <span>Discount ({voucherCode})</span>
+            <span>-{formatUSD(discount)}</span>
           </div>
         )}
       </div>

@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { formatUSD, formatVND } from "../utils/currency";
+import { wishlistApi } from "../api/extrasApi";
+import { useAuth } from "../auth/useAuth";
 
 const ProductCard = ({
   id,
@@ -21,6 +23,25 @@ const ProductCard = ({
     addToCart({ id, name, price, imageUrl }, 1);
     setAdded(true);
     setTimeout(() => setAdded(false), 1200);
+  };
+
+  const { isAuthenticated } = useAuth();
+  const [wished, setWished] = useState(false);
+
+  const handleToggleWishlist = async (e) => {
+    e.preventDefault();
+    if (!isAuthenticated) return;
+    try {
+      if (wished) {
+        await wishlistApi.remove(id);
+        setWished(false);
+      } else {
+        await wishlistApi.add(id);
+        setWished(true);
+      }
+    } catch (err) {
+      /* silent */
+    }
   };
 
   return (
@@ -83,6 +104,28 @@ const ProductCard = ({
               textTransform: "uppercase",
             }}
           >
+            {isAuthenticated && (
+              <button
+                onClick={handleToggleWishlist}
+                style={{
+                  position: "absolute",
+                  top: "12px",
+                  right: "12px",
+                  width: "32px",
+                  height: "32px",
+                  borderRadius: "50%",
+                  border: "none",
+                  backgroundColor: "rgba(255,255,255,0.9)",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "1rem",
+                }}
+              >
+                {wished ? "❤️" : "🤍"}
+              </button>
+            )}
             Premium
           </span>
         )}

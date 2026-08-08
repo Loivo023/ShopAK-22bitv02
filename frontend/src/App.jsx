@@ -39,6 +39,8 @@ import DriversPage from "./pages/shipper/DriversPage";
 import AdminAnalyticsPage from "./pages/AdminAnalyticsPage";
 import ChatWidget from "./Components/ChatWidget";
 import AdminSupportChatPage from "./pages/AdminSupportChatPage";
+import WishlistPage from "./pages/WishlistPage";
+import ProfilePage from "./pages/ProfilePage";
 
 const StoreLayout = ({ children }) => (
   <div
@@ -228,6 +230,22 @@ const App = () => {
           }
         />
       </Route>
+      <Route
+        path="/wishlist"
+        element={
+          <StoreLayout>
+            <WishlistPage />
+          </StoreLayout>
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          <StoreLayout>
+            <ProfilePage />
+          </StoreLayout>
+        }
+      />
 
       <Route
         path="*"

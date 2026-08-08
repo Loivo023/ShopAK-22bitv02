@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import ProductCard from "../Components/ProductCard";
 import { productsApi } from "../api/productsApi";
 import { useAuth } from "../auth/useAuth";
+import { recentlyViewedApi } from "../api/extrasApi";
+import { useAuth } from "../auth/useAuth";
 
 const HomePage = () => {
   const [bestsellers, setBestsellers] = useState([]);
@@ -10,6 +12,13 @@ const HomePage = () => {
   const scrollRef = useRef(null);
   const { role } = useAuth();
   const isAdmin = role === "ADMIN";
+  const [recentlyViewed, setRecentlyViewed] = useState([]);
+  const { isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    recentlyViewedApi.getAll().then(setRecentlyViewed);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     const fetchFeatured = async () => {
@@ -267,6 +276,84 @@ const HomePage = () => {
           </div>
         )}
       </section>
+
+      {recentlyViewed.length > 0 && (
+        <section
+          style={{
+            maxWidth: "1200px",
+            margin: "0 auto",
+            padding: "0 32px 60px",
+          }}
+        >
+          <p
+            style={{
+              fontSize: "0.75rem",
+              letterSpacing: "1.5px",
+              textTransform: "uppercase",
+              color: "#c1662f",
+              fontWeight: "600",
+              margin: "0 0 6px",
+            }}
+          >
+            Continue Browsing
+          </p>
+          <h2
+            style={{
+              fontFamily: "Georgia, serif",
+              fontSize: "1.6rem",
+              fontWeight: "400",
+              color: "#2b2825",
+              margin: "0 0 20px",
+            }}
+          >
+            Recently Viewed
+          </h2>
+          <div
+            style={{
+              display: "flex",
+              gap: "16px",
+              overflowX: "auto",
+              paddingBottom: "8px",
+            }}
+          >
+            {recentlyViewed.map((p) => (
+              <Link
+                key={p.product_id}
+                to={`/products/${p.product_id}`}
+                style={{
+                  flexShrink: 0,
+                  width: "160px",
+                  textDecoration: "none",
+                }}
+              >
+                <img
+                  src={p.imageUrl}
+                  alt={p.name}
+                  referrerPolicy="no-referrer"
+                  style={{
+                    width: "100%",
+                    height: "120px",
+                    objectFit: "cover",
+                    borderRadius: "12px",
+                  }}
+                />
+                <p
+                  style={{
+                    margin: "8px 0 0",
+                    fontSize: "0.8rem",
+                    color: "#2b2825",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {p.name}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ── CTA banner ── */}
       <section

@@ -3,6 +3,8 @@ import { useParams, Link } from "react-router-dom";
 import { productsApi } from "../api/productsApi";
 import { useCart } from "../context/CartContext";
 import { formatUSD, formatVND } from "../utils/currency";
+import { recentlyViewedApi } from "../api/extrasApi";
+import { useAuth } from "../auth/useAuth";
 
 const ProductDetailPage = () => {
   const { id } = useParams();
@@ -21,8 +23,10 @@ const ProductDetailPage = () => {
         setProduct(null);
         setAdded(false);
         setQty(1);
+        const { isAuthenticated } = useAuth();
         const data = await productsApi.getById(id);
         setProduct(data);
+        if (isAuthenticated) recentlyViewedApi.track(id);
       } catch (err) {
         setError("Product not found.");
       } finally {
