@@ -7,7 +7,7 @@ from database import get_db
 from models.order import OrderDB
 from models.payment import PaymentDB
 from schemas.shipper import (DeliveryFailureRequest, ShipperStatusUpdate, CodCollectRequest, CodCollectResponse,)
-from schemas.order import OrderRead, OrderItemRead, ShipperStatusUpdate
+from schemas.order import OrderRead, OrderItemRead
 from auth.deps import require_shipper
 from sqlalchemy import desc
 from typing import List
@@ -19,26 +19,50 @@ import uuid
 router = APIRouter(prefix="/shipper", tags=["shipper"])
 
 
-def _to_order_read(order: OrderDB) -> OrderRead:
+def _to_order_read(order: OrderDB, db: Session) -> OrderRead:
+    payment = (
+        db.query(PaymentDB)
+        .filter(PaymentDB.order_id == order.id)
+        .order_by(PaymentDB.id.desc())
+        .first()
+    )
+
     return OrderRead(
-        id=order.id, status=order.status, payment_status=order.payment_status,
-        payment_provider=(order.payments[-1].provider if hasattr(order, "payments") and order.payments else None),
-        total_amount=order.total_amount, created_at=str(order.created_at),
-        shipping_address=order.shipping_address, shipping_provider=order.shipping_provider,
-        tracking_code=order.tracking_code, shipping_fee=order.shipping_fee,
-        shipper_id=order.shipper_id, carrier=order.carrier,
+        id=order.id,
+        status=order.status,
+        payment_status=order.payment_status,
+        payment_provider=payment.provider if payment else None,
+
+        total_amount=order.total_amount,
+        created_at=str(order.created_at),
+
+        shipping_address=order.shipping_address,
+        shipping_provider=order.shipping_provider,
+
+        tracking_code=order.tracking_code,
+        shipping_fee=order.shipping_fee,
+
+        shipper_id=order.shipper_id,
+        carrier=order.carrier,
         tracking_number=order.tracking_number,
         shipped_at=str(order.shipped_at) if order.shipped_at else None,
+
         delivery_failure_reason=order.delivery_failure_reason,
         delivery_proof_url=order.delivery_proof_url,
-        delivered_at=(str(order.delivered_at) if order.delivered_at else None),
+        delivered_at=str(order.delivered_at) if order.delivered_at else None,
+
         customer_name=order.user.full_name if order.user else None,
         customer_email=order.user.email if order.user else None,
         customer_phone=order.user.phone if order.user else None,
+
         items=[
             OrderItemRead(
-                id=oi.id, product_id=oi.product_id, product_name=oi.product_name,
-                product_price=oi.product_price, quantity=oi.quantity, line_total=oi.line_total,
+                id=oi.id,
+                product_id=oi.product_id,
+                product_name=oi.product_name,
+                product_price=oi.product_price,
+                quantity=oi.quantity,
+                line_total=oi.line_total,
             )
             for oi in order.items
         ],
@@ -58,7 +82,7 @@ def get_available_deliveries(db: Session = Depends(get_db), user=Depends(require
         .order_by(desc(OrderDB.created_at))
         .all()
     )
-    return [_to_order_read(o) for o in orders]
+    return [_to_order_read(o, db) for o in orders]
 
 
 # ── Đơn đã được shipper hiện tại nhận ──
@@ -70,7 +94,7 @@ def get_my_deliveries(db: Session = Depends(get_db), user=Depends(require_shippe
         .order_by(desc(OrderDB.created_at))
         .all()
     )
-    return [_to_order_read(o) for o in orders]
+    return [_to_order_read(o, db) for o in orders]
 
 
 @router.post("/{order_id}/accept", response_model=OrderRead)
@@ -88,7 +112,7 @@ def accept_delivery(order_id: int, db: Session = Depends(get_db), user=Depends(r
     order.shipper_id = user.id
     db.commit()
     db.refresh(order)
-    return _to_order_read(order)
+    return _to_order_read(order, db)
 
 @router.get("/{order_id}", response_model=OrderRead)
 def get_delivery_detail(
@@ -122,7 +146,7 @@ def get_delivery_detail(
                 detail="You are not allowed to view this delivery",
             )
 
-    return _to_order_read(order)
+    return _to_order_read(order, db)
 
 @router.patch("/{order_id}/status", response_model=OrderRead)
 def update_delivery_status(
@@ -140,15 +164,14 @@ def update_delivery_status(
     if not order:
         raise HTTPException(
             status_code=404,
-            detail="Order not found"
+            detail="Order not found",
         )
 
-    # Make sure shipper can only update
-    # their assigned order
+    # Only the assigned shipper can update the order
     if user.role != "ADMIN" and order.shipper_id != user.id:
         raise HTTPException(
             status_code=403,
-            detail="You are not assigned to this order"
+            detail="You are not assigned to this order",
         )
 
     # Allowed status transitions
@@ -160,7 +183,7 @@ def update_delivery_status(
 
     if order.status not in valid_from_status.get(
         payload.status,
-        set()
+        set(),
     ):
         raise HTTPException(
             status_code=400,
@@ -170,17 +193,22 @@ def update_delivery_status(
             ),
         )
 
-    # Update status
-    order.status = payload.status
-
-    # Record when delivery starts
-    if payload.status == "SHIPPED": 
+    # ---------------------------------
+    # SHIPPED
+    # ---------------------------------
+    if payload.status == "SHIPPED":
+        order.status = "SHIPPED"
         order.shipped_at = datetime.utcnow()
 
-    # Complete delivery
-    if payload.status == "COMPLETED":
+    # ---------------------------------
+    # COMPLETED
+    # ---------------------------------
+    elif payload.status == "COMPLETED":
+
+        # Check whether this is a COD order
         cod_payment = (
-            db.query(PaymentDB).filter(
+            db.query(PaymentDB)
+            .filter(
                 PaymentDB.order_id == order.id,
                 PaymentDB.provider == "cod",
             )
@@ -188,18 +216,29 @@ def update_delivery_status(
             .first()
         )
 
-    if cod_payment and order.payment_status != "PAID":
-        raise HTTPException(
-            status_code=400,
-            detail="COD payment must be collected before completing the delivery.",
-        )
+        # COD must be collected before completing delivery
+        if cod_payment and order.payment_status != "PAID":
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "COD payment must be collected "
+                    "before completing the delivery."
+                ),
+            )
 
-    order.delivered_at = datetime.utcnow()
+        order.status = "COMPLETED"
+        order.delivered_at = datetime.utcnow()
+
+    # ---------------------------------
+    # FAILED
+    # ---------------------------------
+    elif payload.status == "FAILED":
+        order.status = "FAILED"
 
     db.commit()
     db.refresh(order)
 
-    return _to_order_read(order)
+    return _to_order_read(order, db)
 
 @router.post(
     "/{order_id}/cod/collect",
@@ -381,7 +420,7 @@ def mark_delivery_failed(
     db.commit()
     db.refresh(order)
 
-    return _to_order_read(order)
+    return _to_order_read(order, db)
 
 @router.post(
     "/{order_id}/proof",
@@ -467,4 +506,4 @@ async def upload_delivery_proof(
     db.commit()
     db.refresh(order)
 
-    return _to_order_read(order)
+    return _to_order_read(order, db)
