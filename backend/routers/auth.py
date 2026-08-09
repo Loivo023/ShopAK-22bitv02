@@ -39,6 +39,54 @@ def register_user(payload: RegisterRequest, db: Session = Depends(get_db)):
         full_name=new_user.full_name, role=new_user.role,
     )
 
+@router.post("/login", response_model=TokenResponse)
+def login_user(
+    payload: LoginRequest,
+    db: Session = Depends(get_db),
+):
+    user = (
+        db.query(UserDB)
+        .filter(UserDB.email == payload.email)
+        .first()
+    )
+
+    if not user:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid email or password",
+        )
+
+    if not verify_password(
+        payload.password,
+        user.password_hash,
+    ):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid email or password",
+        )
+
+    access_token_expires = timedelta(
+        minutes=ACCESS_TOKEN_EXPIRE_MINUTES
+    )
+
+    token = create_access_token(
+        data={
+            "sub": str(user.id),
+            "role": user.role,
+        },
+        expires_delta=access_token_expires,
+    )
+
+    return TokenResponse(
+        access_token=token,
+        user=AuthUser(
+            id=user.id,
+            email=user.email,
+            full_name=user.full_name,
+            role=user.role,
+        ),
+    )
+
 
 @router.post("/forgot-password")
 def forgot_password(
