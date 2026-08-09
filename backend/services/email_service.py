@@ -1,9 +1,11 @@
 import os
 import resend
 
-
 RESEND_API_KEY = os.getenv("RESEND_API_KEY")
-EMAIL_FROM = os.getenv("EMAIL_FROM", "onboarding@resend.dev")
+EMAIL_FROM = os.getenv(
+    "EMAIL_FROM",
+    "onboarding@resend.dev",
+)
 
 if RESEND_API_KEY:
     resend.api_key = RESEND_API_KEY
@@ -14,7 +16,9 @@ def send_password_reset_email(
     reset_url: str,
 ):
     if not RESEND_API_KEY:
-        raise RuntimeError("RESEND_API_KEY is not configured")
+        raise RuntimeError(
+            "RESEND_API_KEY is not configured"
+        )
 
     params = {
         "from": EMAIL_FROM,
@@ -28,6 +32,7 @@ def send_password_reset_email(
             padding: 40px 20px;
             color: #2b2825;
         ">
+
             <h1 style="
                 font-family: Georgia, serif;
                 font-weight: 400;
@@ -73,7 +78,7 @@ def send_password_reset_email(
                 font-size: 13px;
                 line-height: 1.6;
             ">
-                This password reset link will expire.
+                This password reset link will expire in 30 minutes.
                 If you did not request a password reset,
                 you can safely ignore this email.
             </p>
@@ -90,6 +95,7 @@ def send_password_reset_email(
             ">
                 ShopAK
             </p>
+
         </div>
         """,
     }
