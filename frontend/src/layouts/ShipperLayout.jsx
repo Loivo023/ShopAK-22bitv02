@@ -2,6 +2,7 @@ import { useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
 import { clearToken } from "../auth/token";
+import ShipperChatWidget from "../Components/ShipperChatWidget";
 
 const Icon = ({ path, size = 20 }) => (
   <svg
@@ -222,7 +223,8 @@ const ShipperLayout = () => {
           </NavLink>
           {role === "ADMIN" && (
             <NavLink
-              to="/admin/dashboard"
+              to="/shipper/admin"
+              onClick={() => setMobileOpen(false)}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -232,11 +234,11 @@ const ShipperLayout = () => {
                 textDecoration: "none",
                 fontSize: "0.9rem",
                 fontWeight: "500",
-                color: "#7c6cff",
+                color: "#fbbf24",
               }}
             >
               <Icon path={ICONS.grid} size={18} />
-              Back to Admin
+              Admin View
             </NavLink>
           )}
         </nav>
@@ -337,11 +339,15 @@ const ShipperLayout = () => {
           >
             <Icon path={ICONS.menu} />
           </button>
+
           <span style={{ fontWeight: "700", color: "#101828" }}>
             ShopAK Ship
           </span>
         </div>
+
         <Outlet />
+
+        <ShipperChatWidget />
       </div>
     </div>
   );

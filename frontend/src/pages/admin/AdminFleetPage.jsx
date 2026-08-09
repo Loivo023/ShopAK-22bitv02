@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axiosClient from "../../api/axiosClient";
+import { usersApi } from "../../api/usersApi";
 
 const STATUS_META = {
   AVAILABLE: {
@@ -28,6 +29,7 @@ const AdminFleetPage = () => {
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [shippers, setShippers] = useState([]);
 
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -53,8 +55,21 @@ const AdminFleetPage = () => {
     }
   };
 
+  const fetchShippers = async () => {
+    try {
+      const data = await usersApi.getAll();
+
+      const shipperUsers = data.filter((user) => user.role === "SHIPPER");
+
+      setShippers(shipperUsers);
+    } catch (err) {
+      console.error("Failed to load shippers:", err);
+    }
+  };
+
   useEffect(() => {
     fetchVehicles();
+    fetchShippers();
   }, []);
 
   const handleCreate = async (e) => {
@@ -103,6 +118,21 @@ const AdminFleetPage = () => {
     } catch (err) {
       console.error(err);
       alert(err.response?.data?.detail || "Failed to update vehicle.");
+    }
+  };
+
+  const handleAssignShipper = async (vehicle, shipperId) => {
+    try {
+      const res = await axiosClient.patch(`/fleet/${vehicle.id}`, {
+        assigned_shipper_id: shipperId ? Number(shipperId) : null,
+      });
+
+      setVehicles((prev) =>
+        prev.map((v) => (v.id === vehicle.id ? res.data : v)),
+      );
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.detail || "Failed to assign shipper.");
     }
   };
 
@@ -394,9 +424,29 @@ const AdminFleetPage = () => {
                       </td>
 
                       <td style={tdStyle}>
-                        {vehicle.assigned_shipper_id
-                          ? `Shipper #${vehicle.assigned_shipper_id}`
-                          : "Unassigned"}
+                        <select
+                          value={vehicle.assigned_shipper_id || ""}
+                          onChange={(e) =>
+                            handleAssignShipper(vehicle, e.target.value)
+                          }
+                          style={{
+                            padding: "7px 10px",
+                            borderRadius: "8px",
+                            border: "1px solid #e4e6ee",
+                            background: "#fff",
+                            color: "#14162b",
+                            minWidth: "180px",
+                            fontSize: "0.82rem",
+                          }}
+                        >
+                          <option value="">Unassigned</option>
+
+                          {shippers.map((shipper) => (
+                            <option key={shipper.id} value={shipper.id}>
+                              {shipper.full_name || shipper.email}
+                            </option>
+                          ))}
+                        </select>
                       </td>
 
                       <td style={tdStyle}>

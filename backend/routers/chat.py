@@ -5,6 +5,7 @@ from typing import List
 
 from database import get_db
 from models.extras import ChatMessageDB
+from models.user import UserDB
 from models.order import OrderDB
 from schemas.extras import ChatMessageCreate, ChatMessageRead
 from auth.deps import get_current_user, require_admin
@@ -28,6 +29,32 @@ def _to_read(m: ChatMessageDB) -> ChatMessageRead:
         is_bot=m.is_bot,
         created_at=str(m.created_at),
     )
+
+def _get_conversation_user(channel: str, db: Session):
+    """
+    Get the user associated with a support/shipper channel.
+
+    Examples:
+        support:5  -> customer ID 5
+        shipper:12 -> shipper ID 12
+    """
+
+    parts = channel.split(":")
+
+    if len(parts) != 2:
+        return None
+
+    kind, owner_id = parts
+
+    try:
+        owner_id = int(owner_id)
+    except ValueError:
+        return None
+
+    if kind not in ("support", "shipper"):
+        return None
+
+    return db.query(UserDB).filter(UserDB.id == owner_id).first()
 
 
 # ============================================================
@@ -279,7 +306,7 @@ def list_support_conversations(
     user=Depends(require_admin),
 ):
     """
-    List all customer support conversations.
+    List all customer support conversations with customer information.
     """
 
     channels = (
@@ -292,7 +319,6 @@ def list_support_conversations(
     result = []
 
     for (channel,) in channels:
-
         last = (
             db.query(ChatMessageDB)
             .filter(ChatMessageDB.channel == channel)
@@ -300,19 +326,25 @@ def list_support_conversations(
             .first()
         )
 
-        try:
-            customer_id = int(channel.split(":")[1])
-        except (ValueError, IndexError):
-            customer_id = None
+        conversation_user = _get_conversation_user(channel, db)
 
         result.append(
             {
                 "channel": channel,
-                "customer_id": customer_id,
+                "user_id": conversation_user.id if conversation_user else None,
+                "name": conversation_user.full_name if conversation_user else "Unknown Customer",
+                "email": conversation_user.email if conversation_user else None,
+                "phone": conversation_user.phone if conversation_user else None,
+                "role": conversation_user.role if conversation_user else "CUSTOMER",
                 "last_message": last.message if last else "",
                 "last_at": str(last.created_at) if last else "",
             }
         )
+
+    result.sort(
+        key=lambda x: x["last_at"],
+        reverse=True,
+    )
 
     return result
 
@@ -327,7 +359,7 @@ def list_shipper_conversations(
     user=Depends(require_admin),
 ):
     """
-    List all shipper conversations.
+    List all shipper conversations with shipper information.
     """
 
     channels = (
@@ -340,7 +372,6 @@ def list_shipper_conversations(
     result = []
 
     for (channel,) in channels:
-
         last = (
             db.query(ChatMessageDB)
             .filter(ChatMessageDB.channel == channel)
@@ -348,19 +379,25 @@ def list_shipper_conversations(
             .first()
         )
 
-        try:
-            shipper_id = int(channel.split(":")[1])
-        except (ValueError, IndexError):
-            shipper_id = None
+        conversation_user = _get_conversation_user(channel, db)
 
         result.append(
             {
                 "channel": channel,
-                "shipper_id": shipper_id,
+                "user_id": conversation_user.id if conversation_user else None,
+                "name": conversation_user.full_name if conversation_user else "Unknown Shipper",
+                "email": conversation_user.email if conversation_user else None,
+                "phone": conversation_user.phone if conversation_user else None,
+                "role": conversation_user.role if conversation_user else "SHIPPER",
                 "last_message": last.message if last else "",
                 "last_at": str(last.created_at) if last else "",
             }
         )
+
+    result.sort(
+        key=lambda x: x["last_at"],
+        reverse=True,
+    )
 
     return result
 

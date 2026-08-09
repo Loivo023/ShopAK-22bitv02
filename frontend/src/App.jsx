@@ -45,6 +45,7 @@ import AdminOrderDetailsPage from "./pages/admin/AdminOrderDetailsPage";
 import AdminFleetPage from "./pages/admin/AdminFleetPage";
 import AdminReportsPage from "./pages/admin/AdminReportsPage";
 import AdminBillingPage from "./pages/admin/AdminBillingPage";
+import ShipperAdminViewPage from "./pages/shipper/ShipperAdminViewPage";
 import WishlistPage from "./pages/WishlistPage";
 import ProfilePage from "./pages/ProfilePage";
 
@@ -115,12 +116,13 @@ const App = () => {
             path="/shipper/orders/:orderId"
             element={<ShipmentDetailPage />}
           />
+          <Route path="/shipper/orders" element={<OrdersPageShipper />} />
           <Route path="/shipper/fleet" element={<FleetPage />} />
+          <Route path="/shipper/drivers" element={<DriversPage />} />
           <Route path="/shipper/inventory" element={<InventoryPage />} />
           <Route path="/shipper/reports" element={<ReportsPage />} />
           <Route path="/shipper/billing" element={<BillingPage />} />
-          <Route path="/shipper/orders" element={<OrdersPageShipper />} />
-          <Route path="/shipper/drivers" element={<DriversPage />} />
+          <Route path="/shipper/admin" element={<ShipperAdminViewPage />} />
         </Route>
       </Route>
 

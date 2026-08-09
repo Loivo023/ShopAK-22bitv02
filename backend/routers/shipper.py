@@ -6,9 +6,10 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models.order import OrderDB
 from models.payment import PaymentDB
+from models.user import UserDB
 from schemas.shipper import (DeliveryFailureRequest, ShipperStatusUpdate, CodCollectRequest, CodCollectResponse,)
-from schemas.order import OrderRead, OrderItemRead
-from auth.deps import require_shipper
+from schemas.order import (OrderRead, OrderItemRead, ShipperStatusUpdate, AdminOrderRead,)
+from auth.deps import require_shipper, require_admin
 from sqlalchemy import desc
 from typing import List
 
@@ -113,6 +114,93 @@ def accept_delivery(order_id: int, db: Session = Depends(get_db), user=Depends(r
     db.commit()
     db.refresh(order)
     return _to_order_read(order, db)
+
+# ============================================================
+# ADMIN — ALL IN-HOUSE DELIVERIES
+# ============================================================
+
+@router.get(
+    "/admin/all",
+    response_model=List[AdminOrderRead],
+    dependencies=[Depends(require_admin)],
+)
+def get_all_shipper_deliveries(
+    db: Session = Depends(get_db),
+):
+    orders = (
+        db.query(OrderDB)
+        .filter(OrderDB.shipping_provider == "IN_HOUSE")
+        .order_by(desc(OrderDB.created_at))
+        .all()
+    )
+
+    result = []
+
+    for order in orders:
+        customer = order.user
+
+        shipper = None
+        if order.shipper_id:
+            shipper = (
+                db.query(UserDB)
+                .filter(UserDB.id == order.shipper_id)
+                .first()
+            )
+
+        result.append(
+            AdminOrderRead(
+                id=order.id,
+
+                user_id=order.user_id,
+                customer_name=(
+                    customer.full_name
+                    if customer else None
+                ),
+                customer_email=(
+                    customer.email
+                    if customer else None
+                ),
+                customer_phone=(
+                    customer.phone
+                    if customer else None
+                ),
+
+                status=order.status,
+                payment_status=order.payment_status,
+
+                total_amount=order.total_amount,
+                shipping_fee=order.shipping_fee,
+
+                shipping_provider=order.shipping_provider,
+                tracking_code=order.tracking_code,
+
+                shipper_id=order.shipper_id,
+                shipper_name=(
+                    shipper.full_name
+                    if shipper else None
+                ),
+                shipper_email=(
+                    shipper.email
+                    if shipper else None
+                ),
+                shipper_phone=(
+                    shipper.phone
+                    if shipper else None
+                ),
+
+                carrier=order.carrier,
+                tracking_number=order.tracking_number,
+                shipped_at=(
+                    str(order.shipped_at)
+                    if order.shipped_at
+                    else None
+                ),
+
+                created_at=str(order.created_at),
+            )
+        )
+
+    return result
 
 @router.get("/{order_id}", response_model=OrderRead)
 def get_delivery_detail(

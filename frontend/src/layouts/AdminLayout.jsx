@@ -24,13 +24,13 @@ const ICONS = {
   receipt: "M4 2h16v20l-3-2-3 2-3-2-3 2-3-2-1 2V2z M8 7h8 M8 11h8 M8 15h5",
   users:
     "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M23 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75",
+  chat: "M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7A8.38 8.38 0 0 1 4 11.5a8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z",
   store: "M3 9l1-6h16l1 6M4 9v11h16V9M4 9h16M9 21v-6h6v6",
   logout: "M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9",
   menu: "M3 12h18M3 6h18M3 18h18",
   close: "M18 6 6 18M6 6l12 12",
   truck:
     "M3 6h11v10H3zM14 9h4l3 3v4h-7M7 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM18 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4z",
-
   chart: "M4 19V5M4 19h16M8 16v-4M12 16V8M16 16V4M20 16V9",
 };
 
@@ -39,6 +39,8 @@ const NAV_ITEMS = [
   { label: "Products", to: "/admin/products", icon: ICONS.box },
   { label: "Orders", to: "/admin/orders", icon: ICONS.receipt },
   { label: "Users", to: "/admin/users", icon: ICONS.users },
+  { label: "Customer Chat", to: "/admin/support", icon: ICONS.chat },
+  { label: "Shipper Chat", to: "/admin/shipper-chat", icon: ICONS.chat },
   { label: "Drivers & Fleet", to: "/admin/fleet", icon: ICONS.truck },
   { label: "Reports", to: "/admin/reports", icon: ICONS.chart },
   { label: "Billing", to: "/admin/billing", icon: ICONS.receipt },
@@ -81,6 +83,9 @@ const AdminLayout = () => {
           .admin-mobile-toggle {
             display: flex !important;
           }
+          .admin-sidebar-close {
+            display: block !important;
+          }
         }
       `}</style>
 
@@ -102,6 +107,7 @@ const AdminLayout = () => {
         className={`admin-sidebar${mobileOpen ? " open" : ""}`}
         style={{
           width: "252px",
+          boxSizing: "border-box",
           flexShrink: 0,
           background: "linear-gradient(180deg, #14162b 0%, #0e0f1f 100%)",
           color: "#fff",
@@ -111,6 +117,7 @@ const AdminLayout = () => {
           position: "sticky",
           top: 0,
           height: "100vh",
+          overflow: "hidden",
         }}
       >
         <div
@@ -150,8 +157,10 @@ const AdminLayout = () => {
             </span>
           </div>
           <button
+            className="admin-sidebar-close"
             onClick={() => setMobileOpen(false)}
             style={{
+              display: "none",
               background: "none",
               border: "none",
               color: "#9295b0",
@@ -169,6 +178,10 @@ const AdminLayout = () => {
             flexDirection: "column",
             gap: "4px",
             flex: 1,
+            minHeight: 0,
+            overflowY: "auto",
+            overflowX: "hidden",
+            paddingRight: "2px",
           }}
         >
           <p
@@ -271,6 +284,7 @@ const AdminLayout = () => {
             borderRadius: "12px",
             background: "rgba(255,255,255,0.04)",
             marginTop: "12px",
+            flexShrink: 0,
           }}
         >
           <div

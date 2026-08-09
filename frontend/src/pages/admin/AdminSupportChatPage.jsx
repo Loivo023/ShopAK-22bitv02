@@ -54,7 +54,14 @@ const AdminSupportChatPage = ({ listType = "support" }) => {
         {listType === "support" ? "Customer Support" : "Shipper Messages"}
       </h1>
 
-      <div style={{ display: "flex", gap: "16px", height: "560px" }}>
+      <div
+        style={{
+          display: "flex",
+          gap: "16px",
+          height: "560px",
+          minHeight: 0,
+        }}
+      >
         <div
           style={{
             width: "260px",
@@ -83,19 +90,67 @@ const AdminSupportChatPage = ({ listType = "support" }) => {
                   selected === c.channel ? "#eef2ff" : "transparent",
               }}
             >
-              <p
+              <div
                 style={{
-                  margin: 0,
-                  fontWeight: "600",
-                  color: "#14162b",
-                  fontSize: "0.85rem",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "8px",
                 }}
               >
-                {c.channel}
-              </p>
+                <p
+                  style={{
+                    margin: 0,
+                    fontWeight: "700",
+                    color: "#14162b",
+                    fontSize: "0.85rem",
+                  }}
+                >
+                  {c.name || "Unknown User"}
+                </p>
+
+                <span
+                  style={{
+                    fontSize: "0.65rem",
+                    fontWeight: "700",
+                    padding: "3px 7px",
+                    borderRadius: "10px",
+                    background: c.role === "SHIPPER" ? "#d1fae5" : "#eef2ff",
+                    color: c.role === "SHIPPER" ? "#047857" : "#4f46e5",
+                  }}
+                >
+                  {c.role}
+                </span>
+              </div>
+
               <p
                 style={{
-                  margin: "2px 0 0",
+                  margin: "3px 0 0",
+                  fontSize: "0.72rem",
+                  color: "#8b8fa3",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {c.email || `User ID: ${c.user_id}`}
+              </p>
+
+              {c.phone && (
+                <p
+                  style={{
+                    margin: "2px 0 0",
+                    fontSize: "0.7rem",
+                    color: "#a0a3b5",
+                  }}
+                >
+                  {c.phone}
+                </p>
+              )}
+
+              <p
+                style={{
+                  margin: "5px 0 0",
                   fontSize: "0.78rem",
                   color: "#a0a3b5",
                   whiteSpace: "nowrap",
@@ -103,7 +158,7 @@ const AdminSupportChatPage = ({ listType = "support" }) => {
                   textOverflow: "ellipsis",
                 }}
               >
-                {c.last_message}
+                {c.last_message || "No messages"}
               </p>
             </div>
           ))}
@@ -143,12 +198,15 @@ const AdminSupportChatPage = ({ listType = "support" }) => {
                     <div
                       style={{
                         maxWidth: "70%",
+                        width: "fit-content",
                         padding: "9px 14px",
                         borderRadius: "14px",
                         fontSize: "0.85rem",
                         backgroundColor:
                           m.sender_role === "ADMIN" ? "#4f46e5" : "#f1f2f6",
                         color: m.sender_role === "ADMIN" ? "#fff" : "#14162b",
+                        overflowWrap: "anywhere",
+                        wordBreak: "break-word",
                       }}
                     >
                       {m.message}
