@@ -20,14 +20,13 @@ class UserDB(Base):
     avatar_url = Column(String(500), nullable=True)
     phone = Column(String(20), nullable=True)
 
-    # Password reset
+      # Password reset
     reset_token = Column(
-    String(255),
-    nullable=True,
-    index=True,
-)
+        String(255),
+        nullable=True,
+    )
 
-reset_token_expires = Column(
-    DateTime(timezone=True),
-    nullable=True,
-)
+    reset_token_expires = Column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
