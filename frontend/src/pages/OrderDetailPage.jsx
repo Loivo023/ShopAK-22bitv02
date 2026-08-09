@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { ordersApi } from "../api/ordersApi";
 import { useAuth } from "../auth/useAuth";
 import { formatUSD, formatVND } from "../utils/currency";
@@ -24,11 +24,13 @@ const NEXT_STATUS_OPTIONS = {
 const EDITABLE_ITEM_STATUSES = ["PLACED", "PROCESSING"];
 
 const OrderDetailPage = () => {
+  const navigate = useNavigate();
   const { id } = useParams();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [actionError, setActionError] = useState("");
+  const [canceling, setCanceling] = useState(false);
   const [showShipForm, setShowShipForm] = useState(false);
   const [carrier, setCarrier] = useState("");
   const [trackingNumber, setTrackingNumber] = useState("");
@@ -62,6 +64,25 @@ const OrderDetailPage = () => {
       const detail = err.response?.data?.detail;
       setActionError(
         typeof detail === "string" ? detail : "Failed to update status.",
+      );
+    }
+  };
+
+  const handleCancelOrder = async () => {
+    if (!window.confirm("Are you sure you want to cancel this order?")) {
+      return;
+    }
+
+    setActionError("");
+
+    try {
+      await ordersApi.cancelOrder(order.id);
+      navigate("/orders");
+    } catch (err) {
+      const detail = err.response?.data?.detail;
+
+      setActionError(
+        typeof detail === "string" ? detail : "Failed to cancel order.",
       );
     }
   };
@@ -517,22 +538,48 @@ const OrderDetailPage = () => {
         )}
 
         {!isAdmin && order.status === "PLACED" && (
-          <Link
-            to={`/orders/${order.id}/payment`}
+          <div
             style={{
-              display: "inline-block",
+              display: "flex",
+              gap: "10px",
+              flexWrap: "wrap",
               marginTop: "20px",
-              padding: "13px 30px",
-              backgroundColor: "#2b2825",
-              color: "#faf7f2",
-              borderRadius: "30px",
-              textDecoration: "none",
-              fontWeight: "500",
-              fontSize: "0.88rem",
             }}
           >
-            Pay Now
-          </Link>
+            <Link
+              to={`/orders/${order.id}/payment`}
+              style={{
+                display: "inline-block",
+                padding: "13px 30px",
+                backgroundColor: "#2b2825",
+                color: "#faf7f2",
+                borderRadius: "30px",
+                textDecoration: "none",
+                fontWeight: "500",
+                fontSize: "0.88rem",
+              }}
+            >
+              Pay Now
+            </Link>
+
+            <button
+              onClick={handleCancelOrder}
+              disabled={canceling}
+              style={{
+                padding: "13px 30px",
+                backgroundColor: "#fff",
+                color: "#c14f2f",
+                border: "1px solid #c14f2f",
+                borderRadius: "30px",
+                cursor: canceling ? "not-allowed" : "pointer",
+                fontWeight: "500",
+                fontSize: "0.88rem",
+                opacity: canceling ? 0.6 : 1,
+              }}
+            >
+              {canceling ? "Canceling..." : "Cancel Order"}
+            </button>
+          </div>
         )}
 
         <h3

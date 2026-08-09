@@ -1,55 +1,31 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { authApi } from "../api/authApi";
-import { setToken, setUser } from "../auth/token";
 
-const extractErrorMessage = (err, fallback) => {
-  const detail = err.response?.data?.detail;
-  if (typeof detail === "string") return detail;
-  if (Array.isArray(detail) && detail.length > 0)
-    return detail.map((d) => d.msg).join(", ");
-  if (!err.response) return "Cannot connect to server. Please try again.";
-  return fallback;
-};
-
-const inputStyle = {
-  width: "100%",
-  padding: "13px 18px",
-  borderRadius: "30px",
-  border: "1px solid #ece6dc",
-  fontSize: "0.9rem",
-  boxSizing: "border-box",
-  backgroundColor: "#fff",
-  color: "#2b2825",
-};
-
-const LoginPage = () => {
-  const [form, setForm] = useState({ email: "", password: "" });
+const ForgotPasswordPage = () => {
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const navigate = useNavigate();
-
-  const handleChange = (e) =>
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     setLoading(true);
+    setMessage("");
     setError("");
+
     try {
-      const result = await authApi.login({
-        email: form.email,
-        password: form.password,
-      });
-      setToken(result.access_token);
-      setUser(result.user);
-      navigate("/products");
+      const result = await authApi.forgotPassword(email);
+
+      setMessage(result.message || "Password reset request submitted.");
     } catch (err) {
+      const detail = err?.response?.data?.detail;
+
       setError(
-        extractErrorMessage(
-          err,
-          "Login failed. Please check your credentials.",
-        ),
+        typeof detail === "string"
+          ? detail
+          : "Unable to process your request. Please try again.",
       );
     } finally {
       setLoading(false);
@@ -79,8 +55,9 @@ const LoginPage = () => {
             textAlign: "center",
           }}
         >
-          Welcome Back
+          Account Recovery
         </p>
+
         <h1
           style={{
             fontFamily: "Georgia, serif",
@@ -88,62 +65,50 @@ const LoginPage = () => {
             fontWeight: "400",
             color: "#2b2825",
             textAlign: "center",
-            margin: "0 0 8px",
+            margin: "0 0 10px",
           }}
         >
-          Sign In
+          Forgot Password
         </h1>
+
         <p
           style={{
             textAlign: "center",
             color: "#a39c8f",
             fontSize: "0.88rem",
-            marginBottom: "36px",
+            lineHeight: "1.6",
+            marginBottom: "30px",
           }}
         >
-          Log in to continue shopping.
+          Enter your email address and we'll help you reset your password.
         </p>
 
         <form
           onSubmit={handleSubmit}
-          style={{ display: "flex", flexDirection: "column", gap: "14px" }}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "14px",
+          }}
         >
           <input
             type="email"
-            name="email"
             placeholder="Email"
-            value={form.email}
-            onChange={handleChange}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             required
-            style={inputStyle}
-          />
-          <input
-            type="password"
-            name="password"
-            placeholder="Password"
-            value={form.password}
-            onChange={handleChange}
-            required
-            style={inputStyle}
-          />
-
-          <div
             style={{
-              textAlign: "right",
-              marginTop: "-4px",
+              width: "100%",
+              padding: "13px 18px",
+              borderRadius: "30px",
+              border: "1px solid #ece6dc",
+              fontSize: "0.9rem",
+              boxSizing: "border-box",
+              backgroundColor: "#fff",
+              color: "#2b2825",
+              outline: "none",
             }}
-          >
-            <Link
-              to="/forgot-password"
-              style={{
-                color: "#c1662f",
-                textDecoration: "none",
-                fontSize: "0.82rem",
-              }}
-            >
-              Forgot Password?
-            </Link>
-          </div>
+          />
 
           <button
             type="submit"
@@ -154,14 +119,13 @@ const LoginPage = () => {
               color: "#faf7f2",
               border: "none",
               borderRadius: "30px",
-              cursor: "pointer",
+              cursor: loading ? "not-allowed" : "pointer",
               fontSize: "0.9rem",
               fontWeight: "500",
-              marginTop: "8px",
               opacity: loading ? 0.7 : 1,
             }}
           >
-            {loading ? "Signing in..." : "Sign In"}
+            {loading ? "Processing..." : "Reset Password"}
           </button>
         </form>
 
@@ -181,6 +145,23 @@ const LoginPage = () => {
           </div>
         )}
 
+        {message && (
+          <div
+            style={{
+              marginTop: "18px",
+              padding: "14px 18px",
+              backgroundColor: "#eef7ee",
+              borderRadius: "14px",
+              color: "#4f754f",
+              fontSize: "0.85rem",
+              textAlign: "center",
+              lineHeight: "1.5",
+            }}
+          >
+            {message}
+          </div>
+        )}
+
         <p
           style={{
             marginTop: "28px",
@@ -189,16 +170,16 @@ const LoginPage = () => {
             textAlign: "center",
           }}
         >
-          Don't have an account?{" "}
+          Remember your password?{" "}
           <Link
-            to="/register"
+            to="/login"
             style={{
               color: "#c1662f",
               textDecoration: "none",
               fontWeight: "500",
             }}
           >
-            Register
+            Sign In
           </Link>
         </p>
       </div>
@@ -206,4 +187,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;
+export default ForgotPasswordPage;

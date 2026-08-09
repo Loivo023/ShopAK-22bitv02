@@ -39,6 +39,7 @@ const NAV_ITEMS = [
   { label: "Products", to: "/admin/products", icon: ICONS.box },
   { label: "Orders", to: "/admin/orders", icon: ICONS.receipt },
   { label: "Users", to: "/admin/users", icon: ICONS.users },
+  { label: "Reviews", to: "/admin/reviews", icon: ICONS.chat },
   { label: "Customer Chat", to: "/admin/support", icon: ICONS.chat },
   { label: "Shipper Chat", to: "/admin/shipper-chat", icon: ICONS.chat },
   { label: "Drivers & Fleet", to: "/admin/fleet", icon: ICONS.truck },

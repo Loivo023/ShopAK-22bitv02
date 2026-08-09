@@ -118,12 +118,65 @@ def checkout_order(
 
 
 @router.get("/my", response_model=List[OrderSummary])
-def get_my_orders(db: Session = Depends(get_db), user=Depends(get_current_user)):
-    orders = db.query(OrderDB).filter(OrderDB.user_id == user.id).order_by(desc(OrderDB.created_at)).all()
+def get_my_orders(
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    orders = (
+        db.query(OrderDB)
+        .filter(
+            OrderDB.user_id == user.id,
+            OrderDB.status != "CANCELED",
+        )
+        .order_by(desc(OrderDB.created_at))
+        .all()
+    )
+
     return [
-        OrderSummary(id=o.id, status=o.status, payment_status=o.payment_status, total_amount=o.total_amount, created_at=str(o.created_at))
+        OrderSummary(
+            id=o.id,
+            status=o.status,
+            payment_status=o.payment_status,
+            total_amount=o.total_amount,
+            created_at=str(o.created_at),
+        )
         for o in orders
     ]
+
+@router.patch("/{order_id}/cancel", response_model=OrderRead)
+def cancel_my_order(
+    order_id: int,
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    order = (
+        db.query(OrderDB)
+        .filter(
+            OrderDB.id == order_id,
+            OrderDB.user_id == user.id,
+        )
+        .first()
+    )
+
+    if not order:
+        raise HTTPException(
+            status_code=404,
+            detail="Order not found",
+        )
+
+    # Customer can only cancel before admin/shipper accepts it
+    if order.status != "PLACED":
+        raise HTTPException(
+            status_code=400,
+            detail="This order can no longer be canceled.",
+        )
+
+    order.status = "CANCELED"
+
+    db.commit()
+    db.refresh(order)
+
+    return _to_order_read(order)
 
 
 @router.get("/admin/all",
@@ -187,6 +240,40 @@ def get_order_by_id(order_id: int, db: Session = Depends(get_db), user=Depends(g
         raise HTTPException(status_code=404, detail="Order not found")
     if order.user_id != user.id and user.role not in ("ADMIN", "SHIPPER"):
         raise HTTPException(status_code=403, detail="Not allowed")
+    return _to_order_read(order)
+
+@router.post("/{order_id}/cancel", response_model=OrderRead)
+def cancel_my_order(
+    order_id: int,
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    order = (
+        db.query(OrderDB)
+        .filter(
+            OrderDB.id == order_id,
+            OrderDB.user_id == user.id,
+        )
+        .first()
+    )
+
+    if not order:
+        raise HTTPException(
+            status_code=404,
+            detail="Order not found",
+        )
+
+    if order.status not in ("PLACED", "PROCESSING"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Order cannot be canceled while it is {order.status}.",
+        )
+
+    order.status = "CANCELED"
+
+    db.commit()
+    db.refresh(order)
+
     return _to_order_read(order)
 
 

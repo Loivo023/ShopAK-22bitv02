@@ -58,6 +58,17 @@ export const ordersApi = {
     }
   },
 
+  cancelOrder: async (orderId) => {
+    const response = await axiosClient.post(`/orders/${orderId}/cancel`);
+    return response.data;
+  },
+
+  cancelOrder: async (orderId) => {
+    const response = await axiosClient.patch(`/orders/${orderId}/cancel`);
+
+    return response.data;
+  },
+
   async getAllForAdmin() {
     try {
       const response = await axiosClient.get("/orders/admin/all");

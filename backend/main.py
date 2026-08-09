@@ -13,11 +13,13 @@ from database import engine, Base
 from models.product import ProductDB
 from models.user import UserDB
 from models.order import OrderDB, OrderItemDB
+from models.extras import ReviewDB
 from models.payment import PaymentDB
 from routers.products import router as products_router
 from routers.users import router as users_router
 from routers.auth import router as auth_router
 from routers.orders import router as orders_router
+from routers import reviews
 from routers.payments import router as payments_router
 from routers.admin_stats import router as admin_stats_router
 from routers.shipping import router as shipping_router
@@ -64,6 +66,7 @@ app.include_router(products_router)
 app.include_router(users_router)
 app.include_router(auth_router)
 app.include_router(orders_router)
+app.include_router(reviews.router)
 app.include_router(payments_router)
 app.include_router(admin_stats_router)
 app.include_router(shipping_router)
