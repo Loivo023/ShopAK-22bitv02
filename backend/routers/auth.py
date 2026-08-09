@@ -1,5 +1,6 @@
 from datetime import timedelta, datetime, timezone
 
+import os
 import hashlib
 import secrets
 
@@ -11,6 +12,7 @@ from models.user import UserDB
 from schemas.auth import (RegisterRequest, LoginRequest, TokenResponse, AuthUser, ForgotPasswordRequest, ResetPasswordRequest,)
 from auth.security import hash_password, verify_password, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
 from services.password_reset import (generate_reset_token, hash_reset_token,)
+from services.email_service import send_password_reset_email
 
 router = APIRouter(tags=["auth"])
 
@@ -49,24 +51,44 @@ def forgot_password(
         .first()
     )
 
-    # Do not reveal whether an email exists.
+    # Don't reveal whether an email exists
     if not user:
         return {
-            "message": "If an account with that email exists, a password reset link can be requested."
+            "message": (
+                "If an account with that email exists, "
+                "a password reset link has been sent."
+            )
         }
 
     token = secrets.token_urlsafe(32)
 
     user.reset_token = token
-    user.reset_token_expires = datetime.now(timezone.utc) + timedelta(minutes=30)
+    user.reset_token_expires = (
+        datetime.now(timezone.utc) + timedelta(minutes=30)
+    )
 
     db.commit()
 
-    # Temporary development response.
-    # Later we can replace this with real email sending.
+    frontend_url = os.getenv(
+        "FRONTEND_URL",
+        "http://localhost:5173",
+    )
+
+    reset_url = (
+        f"{frontend_url}/reset-password"
+        f"?token={token}"
+    )
+
+    send_password_reset_email(
+        recipient_email=user.email,
+        reset_url=reset_url,
+    )
+
     return {
-        "message": "Password reset token generated.",
-        "reset_token": token,
+        "message": (
+            "If an account with that email exists, "
+            "a password reset link has been sent."
+        )
     }
 
 
@@ -88,15 +110,11 @@ def reset_password(
             detail="Invalid or expired reset token.",
         )
 
-    if not user.reset_token_expires:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid or expired reset token.",
-        )
-
-    now = datetime.now(timezone.utc)
-
-    if user.reset_token_expires < now:
+    if (
+        not user.reset_token_expires
+        or user.reset_token_expires
+        < datetime.now(timezone.utc)
+    ):
         user.reset_token = None
         user.reset_token_expires = None
         db.commit()
@@ -114,12 +132,12 @@ def reset_password(
 
     user.password_hash = hash_password(new_password)
 
-    # Token can only be used once.
+    # Token can only be used once
     user.reset_token = None
     user.reset_token_expires = None
 
     db.commit()
 
     return {
-        "message": "Password reset successfully."
+        "message": "Your password has been reset successfully."
     }

@@ -21,5 +21,13 @@ class UserDB(Base):
     phone = Column(String(20), nullable=True)
 
     # Password reset
-    reset_token_hash = Column(String(64), nullable=True, index=True)
-    reset_token_expires = Column(DateTime(timezone=True), nullable=True)
+    reset_token = Column(
+    String(255),
+    nullable=True,
+    index=True,
+)
+
+reset_token_expires = Column(
+    DateTime(timezone=True),
+    nullable=True,
+)
