@@ -47,6 +47,7 @@ import AdminOrderDetailsPage from "./pages/admin/AdminOrderDetailsPage";
 import AdminFleetPage from "./pages/admin/AdminFleetPage";
 import AdminReportsPage from "./pages/admin/AdminReportsPage";
 import AdminBillingPage from "./pages/admin/AdminBillingPage";
+import AdminReviewsPage from "./pages/admin/AdminReviewsPage";
 import ShipperAdminViewPage from "./pages/shipper/ShipperAdminViewPage";
 import WishlistPage from "./pages/WishlistPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -87,12 +88,12 @@ const App = () => {
           <Route path="/admin/orders/:id" element={<AdminOrderDetailsPage />} />
           <Route path="/admin/fleet" element={<FleetPage />} />
           <Route path="/admin/users" element={<AdminUsersPage />} />
+          <Route path="/admin/reviews" element={<AdminReviewsPage />} />
           <Route path="/admin/shippers" element={<AdminShippersPage />} />
           <Route path="/admin/shipments" element={<ShipmentsPage />} />
           <Route path="/admin/fleet" element={<AdminFleetPage />} />
           <Route path="/admin/reports" element={<AdminReportsPage />} />
           <Route path="/admin/billing" element={<AdminBillingPage />} />
-          <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
           <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
           <Route
             path="/admin/support"

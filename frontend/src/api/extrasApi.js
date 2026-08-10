@@ -46,42 +46,13 @@ export const recentlyViewedApi = {
 };
 
 export const voucherApi = {
-  async apply(code, orderAmount) {
-    try {
-      return (
-        await axiosClient.post("/vouchers/apply", {
-          code,
-          order_amount: orderAmount,
-        })
-      ).data;
-    } catch (e) {
-      handleApiError(e);
-      throw e;
-    }
-  },
-  async getAll() {
-    try {
-      return (await axiosClient.get("/vouchers")).data;
-    } catch (e) {
-      handleApiError(e);
-      throw e;
-    }
-  },
-  async create(v) {
-    try {
-      return (await axiosClient.post("/vouchers", v)).data;
-    } catch (e) {
-      handleApiError(e);
-      throw e;
-    }
-  },
-  async remove(id) {
-    try {
-      await axiosClient.delete(`/vouchers/${id}`);
-    } catch (e) {
-      handleApiError(e);
-      throw e;
-    }
+  apply: async (code, orderAmount) => {
+    const response = await axiosClient.post("/vouchers/apply", {
+      code,
+      order_amount: orderAmount,
+    });
+
+    return response.data;
   },
 };
 

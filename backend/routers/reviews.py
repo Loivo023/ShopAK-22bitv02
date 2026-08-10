@@ -279,3 +279,57 @@ def delete_review(
     db.commit()
 
     return None
+
+# ============================================================
+# ADMIN - GET ALL REVIEWS
+# ============================================================
+
+@router.get(
+    "/admin/all",
+    response_model=List[ReviewRead],
+)
+def get_all_reviews(
+    db: Session = Depends(get_db),
+    admin=Depends(require_admin),
+):
+    reviews = (
+        db.query(ReviewDB)
+        .order_by(desc(ReviewDB.created_at))
+        .all()
+    )
+
+    return [
+        _to_review_read(review, db)
+        for review in reviews
+    ]
+
+
+# ============================================================
+# ADMIN - DELETE ANY REVIEW
+# ============================================================
+
+@router.delete(
+    "/admin/{review_id}",
+    status_code=204,
+)
+def admin_delete_review(
+    review_id: int,
+    db: Session = Depends(get_db),
+    admin=Depends(require_admin),
+):
+    review = (
+        db.query(ReviewDB)
+        .filter(ReviewDB.id == review_id)
+        .first()
+    )
+
+    if not review:
+        raise HTTPException(
+            status_code=404,
+            detail="Review not found",
+        )
+
+    db.delete(review)
+    db.commit()
+
+    return None
