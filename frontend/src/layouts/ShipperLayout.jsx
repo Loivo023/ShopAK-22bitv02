@@ -42,7 +42,6 @@ const NAV_ITEMS = [
   { label: "Orders", to: "/shipper/orders", icon: ICONS.receipt },
   { label: "Fleet", to: "/shipper/fleet", icon: ICONS.fleet },
   { label: "Drivers", to: "/shipper/drivers", icon: ICONS.users },
-  { label: "Inventory", to: "/shipper/inventory", icon: ICONS.box },
   { label: "Reports", to: "/shipper/reports", icon: ICONS.chart },
   { label: "Billing", to: "/shipper/billing", icon: ICONS.dollar },
 ];

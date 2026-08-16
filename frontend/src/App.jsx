@@ -122,7 +122,6 @@ const App = () => {
           <Route path="/shipper/orders" element={<OrdersPageShipper />} />
           <Route path="/shipper/fleet" element={<FleetPage />} />
           <Route path="/shipper/drivers" element={<DriversPage />} />
-          <Route path="/shipper/inventory" element={<InventoryPage />} />
           <Route path="/shipper/reports" element={<ReportsPage />} />
           <Route path="/shipper/billing" element={<BillingPage />} />
           <Route path="/shipper/admin" element={<ShipperAdminViewPage />} />
